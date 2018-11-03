@@ -44,13 +44,14 @@ PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ): okay
             okay := i2c.setupx (SCL_PIN, SDA_PIN, I2C_HZ)
             time.USleep (100)
             Oscillator (TRUE)
+            SetRowInt (0)
+            SetBrightness (15)
             Display (TRUE)
             return okay
         else
           return FALSE
     else
     return FALSE
-
 
 PUB Oscillator(enabled)
 
@@ -86,6 +87,14 @@ PUB SetBrightness(level)
 
   cmd (ht16k33#CMD_BRIGHTNESS | level)
 
+PUB SetRowInt(setting)
+
+    case setting
+        0, 1, 3:
+        OTHER:
+            return
+    cmd (ht16k33#CMD_ROWINT | setting)
+
 PUB PlotPoint (x, y, c)
 
     x := x + 7
@@ -102,16 +111,26 @@ PUB PlotPoint (x, y, c)
         OTHER:
             return
 
-
- '   _disp_buff[y] |= 1 << x
     WriteBuff
 
-PUB WriteChar | i
+PUB Char(chr) | row, msb, pos
+'   7 0 1 2 3 4 5 6    _disp_buff[]
+'   | | | | | | | |
+'   0 1 2 3 4 5 6 7    LED physical layout
+'   7 6 5 4 3 2 1 0    MSB..LSB
 
-    repeat i from 0 to 7
-        _disp_buff[i] |= ch0[i]
-
-    WriteBuff
+    repeat row from 0 to 7
+{' Wasn't thinking...this won't work as-is with the SSD1306 5x8 font files, as they're rotated 90deg CW
+ ' XXX TODO - translate them on-the-fly somehow???
+        pos := font.baseaddr + (8 * chr) + row
+        msb := byte[pos] >> 7 & 1
+        byte[_disp_buff][row] := (msb << 7) | ((byte[pos] & $7F) >< 7)  'Put it back in place
+}
+        pos := @font + (8 * chr) + row
+        msb := byte[pos] >> 7 & 1                                       'Isolate MSB
+        _disp_buff.byte[row] := (msb << 7) | ((byte[pos] & $7F) >< 7)   'Put it back in place
+                                                                        ' and OR it together with the rest of the row
+    WriteBuff                                                           ' reversing the 7 LSBs
 
 PUB WriteBuff | i
 
@@ -120,53 +139,135 @@ PUB WriteBuff | i
     i2c.write ($00)
 
     repeat i from 0 to 7
-        i2c.write ((_disp_buff[i]) & $FF)
-        i2c.write ((_disp_buff[i]) >> 8)
+        i2c.write ((_disp_buff.byte[i]) & $FF)
+'        i2c.write ((_disp_buff[i]) >> 8)
+        i2c.write ($00)
     i2c.stop
 
 PUB getaddr
 
     return @_disp_buff
 
-DAT
-
-    ch0 byte    %10011001
-        byte    %00100100
-        byte    %01000010
-        byte    %01001010
-        byte    %01010010
-        byte    %01000010
-        byte    %00100100
-        byte    %00011000
-
 PUB cmd(cmd_byte)
 
-  i2c.start
-  i2c.write (SLAVE_ADDR_W)
-  i2c.write (cmd_byte)
-  i2c.stop
+      i2c.start
+      i2c.write (SLAVE_ADDR_W)
+      i2c.write (cmd_byte)
+      i2c.stop
 
 PUB readOne: readbyte
 
-  readX (@readbyte, 1)
+    readX (@readbyte, 1)
 
 PUB readX(ptr_buff, num_bytes)
 
-  i2c.start
-  i2c.write (SLAVE_ADDR_R)
-  i2c.pread (ptr_buff, num_bytes, TRUE)
-  i2c.stop
+    i2c.start
+    i2c.write (SLAVE_ADDR_R)
+    i2c.pread (ptr_buff, num_bytes, TRUE)
+    i2c.stop
 
 PUB writeOne(data)
 
-  WriteX (data, 1)
+    WriteX (data, 1)
 
 PUB WriteX(ptr_buff, num_bytes)
 
-  i2c.start
-  i2c.write (SLAVE_ADDR_W)
-  i2c.pwrite (ptr_buff, num_bytes)
-  i2c.stop
+    i2c.start
+    i2c.write (SLAVE_ADDR_W)
+    i2c.pwrite (ptr_buff, num_bytes)
+    i2c.stop
+
+DAT
+
+   font byte    %00111000
+        byte    %01000100
+        byte    %01000100
+        byte    %01001100
+        byte    %01010100
+        byte    %01100100
+        byte    %01000100
+        byte    %00111000
+
+        byte    %00001000
+        byte    %00011000
+        byte    %00111000
+        byte    %00001000
+        byte    %00001000
+        byte    %00001000
+        byte    %00001000
+        byte    %00111100
+
+        byte    %00011000
+        byte    %00100100
+        byte    %00100100
+        byte    %00000100
+        byte    %00001000
+        byte    %00010000
+        byte    %00100000
+        byte    %00111100
+
+        byte    %00111000
+        byte    %01000100
+        byte    %00000100
+        byte    %00011000
+        byte    %00000100
+        byte    %00000100
+        byte    %01000100
+        byte    %00111000
+
+        byte    %00001000
+        byte    %00011000
+        byte    %00101000
+        byte    %01001000
+        byte    %01111100
+        byte    %00001000
+        byte    %00001000
+        byte    %00001000
+
+        byte    %01111100
+        byte    %01000000
+        byte    %01000000
+        byte    %01111000
+        byte    %00000100
+        byte    %00000100
+        byte    %01000100
+        byte    %00111000
+
+        byte    %00111000
+        byte    %01000000
+        byte    %01000000
+        byte    %01111000
+        byte    %01000100
+        byte    %01000100
+        byte    %01000100
+        byte    %00111000
+
+        byte    %01111100
+        byte    %00000100
+        byte    %00000100
+        byte    %00001000
+        byte    %00010000
+        byte    %00010000
+        byte    %00010000
+        byte    %00010000
+
+        byte    %00111000
+        byte    %01000100
+        byte    %01000100
+        byte    %00111000
+        byte    %01000100
+        byte    %01000100
+        byte    %01000100
+        byte    %00111000
+
+        byte    %00111000
+        byte    %01000100
+        byte    %01000100
+        byte    %01000100
+        byte    %00111100
+        byte    %00000100
+        byte    %00000100
+        byte    %00111000
 
 DAT
 {

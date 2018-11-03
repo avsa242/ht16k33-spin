@@ -25,10 +25,36 @@ VAR
 
     byte _offbuff[8]
 
-PUB Main | x, y, buf, i, delay
+PUB Main | x, y, i, delay, buf
 
     Setup
     buf := led.getaddr
+
+    repeat i from 0 to 9
+        ser.Clear
+        ser.Position (0, 0)
+        led.Char (i)
+        led.WriteBuff
+        time.MSleep (500)
+
+        repeat x from 0 to 7
+            ser.Bin (byte[buf][x], 8)
+            ser.NewLine
+
+    repeat
+
+
+
+    repeat x from 0 to 7
+        led.PlotPoint (x, 0, 1)
+        time.MSleep (500)
+    repeat
+    repeat y from 0 to 7
+        led.PlotPoint (y, y, 1)
+        led.PlotPoint (7-y, y, 1)
+        led.WriteBuff
+        time.MSleep (100)
+    repeat
     repeat
         repeat x from -7 to 6
             y := ||x
@@ -74,6 +100,15 @@ PUB point(x, y, c)
     x := x // 8
     _offbuff[y] := (1 << x)
 
+PUB WriteChar | buf, i, c
+
+    buf := led.getaddr
+    repeat c from 0 to 9
+        repeat i from 0 to 7
+            byte[buf][i] := fnt[i + (c*8)] >< 7
+        led.WriteBuff
+        time.MSleep (1000)
+
 PUB Setup
 
     repeat until ser.Start (115_200)
@@ -85,9 +120,108 @@ PUB Setup
         repeat
     else
         ser.Str (string("LED driver started", ser#NL))
-        ser.Hex (led.Oscillator (TRUE), 2)
-        ser.NewLine
-        ser.Hex (led.Display (TRUE), 2)
+
+DAT
+{
+    fnt byte    %00011000
+        byte    %00100100
+        byte    %01000010
+        byte    %01001010
+        byte    %01010010
+        byte    %01000010
+        byte    %00100100
+        byte    %00011000
+}
+    fnt byte    %10111000
+        byte    %01000100
+        byte    %01000100
+        byte    %01001100
+        byte    %01010100
+        byte    %01100100
+        byte    %01000100
+        byte    %00111000
+
+        byte    %00011000
+        byte    %00011000
+        byte    %00111000
+        byte    %00001000
+        byte    %00001000
+        byte    %00001000
+        byte    %00001000
+        byte    %00111100
+
+        byte    %00111000
+        byte    %01000100
+        byte    %01000100
+        byte    %00001000
+        byte    %00010000
+        byte    %00010000
+        byte    %00100000
+        byte    %01111100
+
+        byte    %00111000
+        byte    %01000100
+        byte    %00000100
+        byte    %00011000
+        byte    %00000100
+        byte    %00000100
+        byte    %01000100
+        byte    %00111000
+
+        byte    %00001000
+        byte    %00011000
+        byte    %00101000
+        byte    %01001000
+        byte    %01111100
+        byte    %00001000
+        byte    %00001000
+        byte    %00001000
+
+        byte    %01111100
+        byte    %01000000
+        byte    %01000000
+        byte    %01111000
+        byte    %00000100
+        byte    %00000100
+        byte    %01000100
+        byte    %00111000
+
+        byte    %00111000
+        byte    %01000000
+        byte    %01000000
+        byte    %01111000
+        byte    %01000100
+        byte    %01000100
+        byte    %01000100
+        byte    %00111000
+
+        byte    %01111100
+        byte    %00000100
+        byte    %00000100
+        byte    %00001000
+        byte    %00010000
+        byte    %00010000
+        byte    %00010000
+        byte    %00010000
+
+        byte    %00111000
+        byte    %01000100
+        byte    %01000100
+        byte    %00111000
+        byte    %01000100
+        byte    %01000100
+        byte    %01000100
+        byte    %00111000
+
+        byte    %00111000
+        byte    %01000100
+        byte    %01000100
+        byte    %01000100
+        byte    %00111100
+        byte    %00000100
+        byte    %00000100
+        byte    %00111000
+
 
 DAT
 {
