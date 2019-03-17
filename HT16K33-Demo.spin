@@ -1,34 +1,35 @@
 {
     --------------------------------------------
     Filename: HT16K33-Demo.spin
+    Description: Demo for the HT16K33 driver
     Author: Jesse Burt
     Created: Oct 11, 2018
-    Updated: Oct 11, 2018
-    Copyright (c) 2018
+    Updated: Mar 17, 2019
+    Copyright (c) 2019
     See end of file for terms of use.
     --------------------------------------------
 }
 
 CON
 
-    _clkmode    = cfg#_clkmode
-    _xinfreq    = cfg#_xinfreq
+    _clkmode    = cfg#_CLKMODE
+    _xinfreq    = cfg#_XINFREQ
 
 OBJ
 
-  cfg   : "core.con.client.parraldev"
+  cfg   : "core.con.boardcfg.flip"
   ser   : "com.serial.terminal"
   time  : "time"
   led   : "display.led.ht16k33.i2c"
 
 VAR
 
-    byte _offbuff[8]
+    byte _ser_cog, _offbuff[8]
 
 PUB Main | x, y, i, delay, buf
 
     Setup
-    buf := led.getaddr
+    buf := led.DispAddr
 
     repeat i from 0 to 9
         ser.Clear
@@ -102,7 +103,7 @@ PUB point(x, y, c)
 
 PUB WriteChar | buf, i, c
 
-    buf := led.getaddr
+    buf := led.DispAddr
     repeat c from 0 to 9
         repeat i from 0 to 7
             byte[buf][i] := fnt[i + (c*8)] >< 7
@@ -111,15 +112,15 @@ PUB WriteChar | buf, i, c
 
 PUB Setup
 
-    repeat until ser.Start (115_200)
+    repeat until _ser_cog := ser.Start (115_200)
     ser.Clear
     ser.Str (string("Serial terminal started", ser#NL))
-    ifnot led.Start
+    if led.Start
+        ser.Str (string("LED driver started", ser#NL))
+    else
         ser.Str (string("LED driver failed to start", ser#NL))
         time.MSleep (1000)
         repeat
-    else
-        ser.Str (string("LED driver started", ser#NL))
 
 DAT
 {

@@ -11,107 +11,68 @@
 
 CON
 
-  SLAVE_ADDR    = ht16k33#SLAVE_ADDR
-  SLAVE_ADDR_W  = SLAVE_ADDR
-  SLAVE_ADDR_R  = SLAVE_ADDR|1
-  
-  DEF_SCL       = 28
-  DEF_SDA       = 29
-  DEF_HZ        = ht16k33#I2C_DEF_FREQ
+    SLAVE_WR    = core#SLAVE_ADDR
+    SLAVE_RD    = core#SLAVE_ADDR|1
+
+    DEF_SCL     = 28
+    DEF_SDA     = 29
+    DEF_HZ      = core#I2C_DEF_FREQ
 
 VAR
 
-  byte _disp_power, _blink_freq, _disp_buff[8]
+    byte _disp_power, _blink_freq, _disp_buff[8]
 
 OBJ
 
-  i2c     : "jm_i2c_fast"
-  ht16k33 : "core.con.ht16k33"
-  debug   : "debug"
-  time    : "time"
+    i2c     : "com.i2c"
+    core    : "core.con.ht16k33"
+    time    : "time"
 
-PUB null
+PUB Null
 ''This is not a top-level object
 
 PUB Start: okay                                         'Default to "standard" Propeller I2C pins and 400kHz
 
-  okay := Startx (DEF_SCL, DEF_SDA, DEF_HZ)
+    okay := Startx (DEF_SCL, DEF_SDA, DEF_HZ)
 
 PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ): okay
 
     if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31)
-        if I2C_HZ =< ht16k33#I2C_MAX_FREQ
-            okay := i2c.setupx (SCL_PIN, SDA_PIN, I2C_HZ)
-            time.USleep (100)
-            Oscillator (TRUE)
-            SetRowInt (0)
-            SetBrightness (15)
-            Display (TRUE)
-            return okay
-        else
-          return FALSE
-    else
-    return FALSE
+        if I2C_HZ =< core#I2C_MAX_FREQ
+            if okay := i2c.setupx (SCL_PIN, SDA_PIN, I2C_HZ)
+                time.USleep (100)
+                if i2c.present (SLAVE_WR)
+                    Oscillator (TRUE)
+                    RowInt (0)
+                    Brightness (15)
+                    Display (TRUE)
+                    return okay
+    return FALSE                                        'If we got here, something went wrong
 
-PUB Oscillator(enabled)
+PUB Stop
 
-  case ||enabled
-    0, 1: enabled := ||enabled
-    OTHER:
-        return
-  cmd (ht16k33#CMD_OSCILLATOR | enabled)
+    Display (FALSE)
+    Oscillator (FALSE)
+    time.MSleep (100)
+    i2c.terminate
 
-PUB Display(enabled)
+PUB BlinkRate(rate_hz)
 
-    case ||enabled
-        0, 1: _disp_power := ||enabled
+    case rate_hz
+        2:      _blink_freq := %01 << 1
+        1:      _blink_freq := %10 << 1
+        0.5, 5: _blink_freq := %11 << 1
+        OTHER:  _blink_freq := %00 << 1
+
+    writeRegX (core#CMD_DISPSETUP, _blink_freq | _disp_power)
+
+PUB Brightness(level)
+
+    case level
+        0..15:
         OTHER:
             return
-    cmd (ht16k33#CMD_DISPSETUP | _blink_freq | _disp_power)
-
-PUB SetBlinkRate(rate_hz)
-
-  case rate_hz
-    2:      _blink_freq := %01 << 1
-    1:      _blink_freq := %10 << 1
-    0.5, 5: _blink_freq := %11 << 1
-    OTHER:  _blink_freq := %00 << 1
-
-  cmd (ht16k33#CMD_DISPSETUP | _blink_freq | _disp_power)
-
-PUB SetBrightness(level)
-
-  case level
-    0..15:
-    OTHER:  level := %1111
-
-  cmd (ht16k33#CMD_BRIGHTNESS | level)
-
-PUB SetRowInt(setting)
-
-    case setting
-        0, 1, 3:
-        OTHER:
-            return
-    cmd (ht16k33#CMD_ROWINT | setting)
-
-PUB PlotPoint (x, y, c)
-
-    x := x + 7
-    x := x // 8
-    case c
-        -1:
-            _disp_buff[y] := !(1 << x)
-
-        0:
-            _disp_buff[y] &= (1 << x)
-        
-        1:
-            _disp_buff[y] |= (1 << x)
-        OTHER:
-            return
-
-    WriteBuff
+    writeRegX (core#CMD_BRIGHTNESS, level)
 
 PUB Char(chr) | row, msb, pos
 '   7 0 1 2 3 4 5 6    _disp_buff[]
@@ -130,52 +91,77 @@ PUB Char(chr) | row, msb, pos
         msb := byte[pos] >> 7 & 1                                       'Isolate MSB
         _disp_buff.byte[row] := (msb << 7) | ((byte[pos] & $7F) >< 7)   'Put it back in place
                                                                         ' and OR it together with the rest of the row
-    WriteBuff                                                           ' reversing the 7 LSBs
+                                                                        ' reversing the 7 LSBs
+    writeRegX ($00, _disp_buff)
 
-PUB WriteBuff | i
-
-    i2c.start
-    i2c.write (SLAVE_ADDR_W)
-    i2c.write ($00)
-
-    repeat i from 0 to 7
-        i2c.write ((_disp_buff.byte[i]) & $FF)
-'        i2c.write ((_disp_buff[i]) >> 8)
-        i2c.write ($00)
-    i2c.stop
-
-PUB getaddr
+PUB DispAddr
 
     return @_disp_buff
 
-PUB cmd(cmd_byte)
+PUB Display(enabled)
 
-      i2c.start
-      i2c.write (SLAVE_ADDR_W)
-      i2c.write (cmd_byte)
-      i2c.stop
+    case ||enabled
+        0, 1: _disp_power := ||enabled
+        OTHER:
+            return
+    writeRegX (core#CMD_DISPSETUP, _blink_freq | _disp_power)
 
-PUB readOne: readbyte
+PUB Oscillator(enabled)
 
-    readX (@readbyte, 1)
+    case ||enabled
+        0, 1: enabled := ||enabled
+        OTHER:
+            return
+    writeRegX (core#CMD_OSCILLATOR, enabled)
 
-PUB readX(ptr_buff, num_bytes)
+PUB PlotPoint (x, y, c)
 
-    i2c.start
-    i2c.write (SLAVE_ADDR_R)
-    i2c.pread (ptr_buff, num_bytes, TRUE)
-    i2c.stop
+    x := x + 7
+    x := x // 8
+    case c
+        -1:
+            _disp_buff[y] := !(1 << x)
 
-PUB writeOne(data)
+        0:
+            _disp_buff[y] &= (1 << x)
 
-    WriteX (data, 1)
+        1:
+            _disp_buff[y] |= (1 << x)
+        OTHER:
+            return
 
-PUB WriteX(ptr_buff, num_bytes)
+    writeRegX ($00, _disp_buff)
 
-    i2c.start
-    i2c.write (SLAVE_ADDR_W)
-    i2c.pwrite (ptr_buff, num_bytes)
-    i2c.stop
+PUB RowInt(output_pin)
+
+    case output_pin
+        0, 1, 3:
+        OTHER:
+            return
+    writeRegX (core#CMD_ROWINT, output_pin)
+
+PUB writeRegX(reg, buf_addr) | cmd_packet[2], i
+' Write nr_bytes to register 'reg' stored in val
+    cmd_packet.byte[0] := SLAVE_WR' | _addr_bit
+
+    case reg
+        $00:                    'Display RAM
+            cmd_packet.byte[1] := $00
+            i2c.start
+            i2c.wr_block (@cmd_packet, 8)
+            repeat i from 0 to 7
+                i2c.write ((byte[buf_addr][i]) & $FF)
+'                i2c.write ((_disp_buff[i]) >> 8)
+                i2c.write ($00)
+            i2c.stop
+
+        $20, $80, $A0, $E0, $D9:     'Control registers
+            cmd_packet.byte[1] := reg | buf_addr
+            i2c.start
+            i2c.wr_block (@cmd_packet, 2)
+            i2c.stop
+        OTHER:
+            return
 
 DAT
 
