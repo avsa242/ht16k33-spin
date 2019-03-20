@@ -116,6 +116,8 @@ PUB Oscillator(enabled)
 
 PUB PlotPoint (x, y, c)
 
+    x := 0 #> x <# 7
+    y := 0 #> y <# 7
     x := x + 7
     x := x // 8
     case c

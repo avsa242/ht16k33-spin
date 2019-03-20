@@ -1,7 +1,7 @@
 # ht16k33-spin 
 ---------------
 
-This is a P8X32A/Propeller driver object for the Holtek HT16K33 LED Matrix/Segment IC.
+This is a P8X32A/Propeller driver object for the Holtek HT16K33 LED Matrix/Segment IC (I2C).
 
 ## Salient Features
 
