@@ -120,6 +120,8 @@ PUB Setup
     else
         ser.Str (string("LED driver failed to start", ser#NL))
         time.MSleep (1000)
+        led.Stop
+        ser.Stop
         repeat
 
 DAT

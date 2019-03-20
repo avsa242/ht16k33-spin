@@ -140,6 +140,10 @@ PUB RowInt(output_pin)
             return
     writeRegX (core#CMD_ROWINT, output_pin)
 
+PUB WriteBuff
+
+    writeRegX ($00, @_disp_buff)
+
 PUB writeRegX(reg, buf_addr) | cmd_packet[2], i
 ' Write nr_bytes to register 'reg' stored in val
     cmd_packet.byte[0] := SLAVE_WR' | _addr_bit
