@@ -21,7 +21,7 @@ CON
     CMD_BRIGHTNESS  = $E0
     CMD_TESTMODE    = $D9
 
-PUB null
+PUB Null
 ''This is not a top-level object
 
 DAT

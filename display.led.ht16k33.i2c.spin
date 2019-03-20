@@ -3,8 +3,8 @@
     Filename: display.led.ht16k33.i2c.spin
     Author: Jesse Burt
     Created: Oct 11, 2018
-    Updated: Oct 11, 2018
-    Copyright (c) 2018
+    Updated: Mar 20, 2019
+    Copyright (c) 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -89,10 +89,10 @@ PUB Char(chr) | row, msb, pos
 }
         pos := @font + (8 * chr) + row
         msb := byte[pos] >> 7 & 1                                       'Isolate MSB
-        _disp_buff.byte[row] := (msb << 7) | ((byte[pos] & $7F) >< 7)   'Put it back in place
+        _disp_buff[row] := (msb << 7) | ((byte[pos] & $7F) >< 7)        'Put it back in place
                                                                         ' and OR it together with the rest of the row
                                                                         ' reversing the 7 LSBs
-    writeRegX ($00, _disp_buff)
+    writeRegX ($00, @_disp_buff)
 
 PUB DispAddr
 
@@ -130,7 +130,7 @@ PUB PlotPoint (x, y, c)
         OTHER:
             return
 
-    writeRegX ($00, _disp_buff)
+    writeRegX ($00, @_disp_buff)
 
 PUB RowInt(output_pin)
 
@@ -149,17 +149,16 @@ PUB writeRegX(reg, buf_addr) | cmd_packet[2], i
     cmd_packet.byte[0] := SLAVE_WR' | _addr_bit
 
     case reg
-        $00:                    'Display RAM
+        $00:                                            'Display RAM
             cmd_packet.byte[1] := $00
             i2c.start
-            i2c.wr_block (@cmd_packet, 8)
+            i2c.wr_block (@cmd_packet, 2)
             repeat i from 0 to 7
                 i2c.write ((byte[buf_addr][i]) & $FF)
-'                i2c.write ((_disp_buff[i]) >> 8)
                 i2c.write ($00)
             i2c.stop
 
-        $20, $80, $A0, $E0, $D9:     'Control registers
+        $20, $80, $A0, $E0, $D9:                        'Control registers
             cmd_packet.byte[1] := reg | buf_addr
             i2c.start
             i2c.wr_block (@cmd_packet, 2)
@@ -169,95 +168,95 @@ PUB writeRegX(reg, buf_addr) | cmd_packet[2], i
 
 DAT
 
-   font byte    %00111000
+   font byte    %01111100
         byte    %01000100
         byte    %01000100
-        byte    %01001100
-        byte    %01010100
-        byte    %01100100
         byte    %01000100
-        byte    %00111000
-
-        byte    %00001000
-        byte    %00011000
-        byte    %00111000
-        byte    %00001000
-        byte    %00001000
-        byte    %00001000
-        byte    %00001000
-        byte    %00111100
-
-        byte    %00011000
-        byte    %00100100
-        byte    %00100100
-        byte    %00000100
-        byte    %00001000
-        byte    %00010000
-        byte    %00100000
-        byte    %00111100
-
-        byte    %00111000
         byte    %01000100
-        byte    %00000100
-        byte    %00011000
-        byte    %00000100
-        byte    %00000100
         byte    %01000100
-        byte    %00111000
-
-        byte    %00001000
-        byte    %00011000
-        byte    %00101000
-        byte    %01001000
+        byte    %01000100
         byte    %01111100
-        byte    %00001000
-        byte    %00001000
-        byte    %00001000
 
-        byte    %01111100
-        byte    %01000000
-        byte    %01000000
-        byte    %01111000
         byte    %00000100
         byte    %00000100
-        byte    %01000100
-        byte    %00111000
-
-        byte    %00111000
-        byte    %01000000
-        byte    %01000000
-        byte    %01111000
-        byte    %01000100
-        byte    %01000100
-        byte    %01000100
-        byte    %00111000
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
 
         byte    %01111100
         byte    %00000100
         byte    %00000100
-        byte    %00001000
-        byte    %00010000
-        byte    %00010000
-        byte    %00010000
-        byte    %00010000
+        byte    %01111100
+        byte    %01000000
+        byte    %01000000
+        byte    %01000000
+        byte    %01111100
 
-        byte    %00111000
-        byte    %01000100
-        byte    %01000100
-        byte    %00111000
-        byte    %01000100
-        byte    %01000100
-        byte    %01000100
-        byte    %00111000
-
-        byte    %00111000
-        byte    %01000100
-        byte    %01000100
-        byte    %01000100
-        byte    %00111100
+        byte    %01111100
         byte    %00000100
         byte    %00000100
-        byte    %00111000
+        byte    %01111100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %01111100
+
+        byte    %01000100
+        byte    %01000100
+        byte    %01000100
+        byte    %01111100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+
+        byte    %01111100
+        byte    %01000000
+        byte    %01000000
+        byte    %01111100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %01111100
+
+        byte    %01111100
+        byte    %01000000
+        byte    %01000000
+        byte    %01111100
+        byte    %01000100
+        byte    %01000100
+        byte    %01000100
+        byte    %01111100
+
+        byte    %01111100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+
+        byte    %01111100
+        byte    %01000100
+        byte    %01000100
+        byte    %01111100
+        byte    %01000100
+        byte    %01000100
+        byte    %01000100
+        byte    %01111100
+
+        byte    %01111100
+        byte    %01000100
+        byte    %01000100
+        byte    %01111100
+        byte    %00000100
+        byte    %00000100
+        byte    %00000100
+        byte    %01111100
 
 DAT
 {
