@@ -4,7 +4,7 @@
     Description: Driver for HT16K33-based LED matrix displays
     Author: Jesse Burt
     Created: Oct 11, 2018
-    Updated: Feb 7, 2020
+    Updated: Feb 8, 2020
     Copyright (c) 2020
     See end of file for terms of use.
     --------------------------------------------

@@ -5,25 +5,28 @@ This is a P8X32A/Propeller driver object for the Holtek HT16K33 LED Matrix/Segme
 
 ## Salient Features
 
-* Operation up to 1000kHz
-* Control display brightness
-* Control display blink
-* Buffered display
-* Render a pixel to buffer
-* Render a bitmap font to buffer
+* Operation up to 1MHz
+* Support for setting display brightness, blinking
+* Support for generic bitmap graphics library
 
 ## Requirements
 
-* Requires one additional core/cog for the PASM I2C driver
+* P1/SPIN1: 1 extra core/cog for the PASM I2C driver
+* Presence of lib.gfx.bitmap library
+
+## Compiler compatibility
+
+* P1/SPIN1: ~~Propeller Tool~~ Unsupported - requires a compiler with preprocessor support
+* P1/SPIN1: OpenSpin (tested with 1.00.81)
 
 ## Limitations
 
-* Early in development - feature lacking
+* Very early in development - may malfunction or outright fail to build
 * Written using Adafruit 8x8 backpack for development, the pixel layout of which differs from some other boards, so the display may not (yet) look correct on those
 * Doesn't support LED segment displays, specifically
 * Doesn't support alternate slave addresses
 
 ## TODO
 
-* Implement support for non-Adafruit displays, other size displays, segmented displays
-* Implement support for alternate slave addresses
+- [ ] Implement support for non-Adafruit displays, other size displays, segmented displays
+- [ ] Implement support for alternate slave addresses
