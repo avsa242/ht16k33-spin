@@ -25,6 +25,7 @@ This is a P8X32A/Propeller driver object for the Holtek HT16K33 LED Matrix/Segme
 * Written using Adafruit 8x8 backpack for development, the pixel layout of which differs from some other boards, so the display may not (yet) look correct on those
 * Doesn't support LED segment displays, specifically
 * Doesn't support alternate slave addresses
+* Doesn't support 16 pixel-wide displays
 
 ## TODO
 

@@ -139,7 +139,7 @@ PUB RowInt(output_pin)
 
 PUB Update
 ' Write display buffer to display
-    writeReg ($00, _draw_buffer)
+    writeReg (core#DISP_RAM, _draw_buffer)
 
 PRI writeReg(reg, buff_addr) | cmd_packet[2], i
 ' Write nr_bytes to register 'reg' stored in val

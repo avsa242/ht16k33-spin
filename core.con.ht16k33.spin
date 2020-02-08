@@ -15,6 +15,8 @@ CON
     I2C_DEF_FREQ    = 400_000
     I2C_MAX_FREQ    = 1_000_000
 
+    DISP_RAM        = $00                                   ' Start of display RAM
+
     CMD_OSCILLATOR  = $20
     CMD_DISPSETUP   = $80
     CMD_ROWINT      = $A0
