@@ -1,15 +1,21 @@
 {
     --------------------------------------------
     Filename: display.led.ht16k33.i2c.spin
+    Description: Driver for HT16K33-based LED matrix displays
     Author: Jesse Burt
     Created: Oct 11, 2018
-    Updated: Mar 20, 2019
-    Copyright (c) 2019
+    Updated: Feb 7, 2020
+    Copyright (c) 2020
     See end of file for terms of use.
     --------------------------------------------
 }
 
+#define HT16K33-ADAFRUIT
+#include "lib.gfx.bitmap.spin"
+
 CON
+
+    MAX_COLOR   = 1
 
     SLAVE_WR    = core#SLAVE_ADDR
     SLAVE_RD    = core#SLAVE_ADDR|1
@@ -20,6 +26,9 @@ CON
 
 VAR
 
+    long _draw_buffer
+    word _buff_sz
+    byte _disp_width, _disp_height, _disp_xmax, _disp_ymax
     byte _disp_power, _blink_freq, _disp_buff[8]
 
 OBJ
@@ -31,108 +40,94 @@ OBJ
 PUB Null
 ''This is not a top-level object
 
-PUB Start: okay                                         'Default to "standard" Propeller I2C pins and 400kHz
-
-    okay := Startx (DEF_SCL, DEF_SDA, DEF_HZ)
-
-PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ): okay
+PUB Startx(width, height, SCL_PIN, SDA_PIN, I2C_HZ, dispbuffer_address): okay
 
     if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31)
         if I2C_HZ =< core#I2C_MAX_FREQ
             if okay := i2c.setupx (SCL_PIN, SDA_PIN, I2C_HZ)
                 time.USleep (100)
                 if i2c.present (SLAVE_WR)
-                    Oscillator (TRUE)
-                    RowInt (0)
-                    Brightness (15)
-                    Display (TRUE)
+                    Defaults
+                    _disp_width := width
+                    _disp_height := height
+                    _disp_xmax := _disp_width-1
+                    _disp_ymax := _disp_height-1
+                    _buff_sz := (_disp_width * _disp_height) / 8
+                    Address(dispbuffer_address)
+
                     return okay
     return FALSE                                        'If we got here, something went wrong
 
 PUB Stop
 
-    Display (FALSE)
+    DisplayPower (FALSE)
     Oscillator (FALSE)
     time.MSleep (100)
     i2c.terminate
 
-PUB BlinkRate(rate_hz)
+PUB Defaults
 
+    Oscillator (TRUE)
+    RowInt (0)
+    Brightness (15)
+    DisplayPower (TRUE)
+
+PUB Address(addr)
+' Set framebuffer address
+    case addr
+        $0004..$7FFF-_buff_sz:
+            _draw_buffer := addr
+            result := _draw_buffer
+            return
+        OTHER:
+            result := _draw_buffer
+            return
+
+PUB BlinkRate(rate_hz)
+' Set blink rate of display, in Hz
+'   Valid values: 0.5, 5, 1, 2
+'   Any other value disables blinking
     case rate_hz
         2:      _blink_freq := %01 << 1
         1:      _blink_freq := %10 << 1
         0.5, 5: _blink_freq := %11 << 1
         OTHER:  _blink_freq := %00 << 1
 
-    writeRegX (core#CMD_DISPSETUP, _blink_freq | _disp_power)
+    writeReg (core#CMD_DISPSETUP, _blink_freq | _disp_power)
 
 PUB Brightness(level)
-
+' Set display brightness
+'   Valid values: 0..15
+'   Any other value is ignored
     case level
         0..15:
         OTHER:
             return
-    writeRegX (core#CMD_BRIGHTNESS, level)
+    writeReg (core#CMD_BRIGHTNESS, level)
 
-PUB Char(chr) | row, msb, pos
-'   7 0 1 2 3 4 5 6    _disp_buff[]
-'   | | | | | | | |
-'   0 1 2 3 4 5 6 7    LED physical layout
-'   7 6 5 4 3 2 1 0    MSB..LSB
+PUB ClearAccel
+' Dummy method
 
-    repeat row from 0 to 7
-{' Wasn't thinking...this won't work as-is with the SSD1306 5x8 font files, as they're rotated 90deg CW
- ' XXX TODO - translate them on-the-fly somehow???
-        pos := font.baseaddr + (8 * chr) + row
-        msb := byte[pos] >> 7 & 1
-        byte[_disp_buff][row] := (msb << 7) | ((byte[pos] & $7F) >< 7)  'Put it back in place
-}
-        pos := @font + (8 * chr) + row
-        msb := byte[pos] >> 7 & 1                                       'Isolate MSB
-        _disp_buff[row] := (msb << 7) | ((byte[pos] & $7F) >< 7)        'Put it back in place
-                                                                        ' and OR it together with the rest of the row
-                                                                        ' reversing the 7 LSBs
-    writeRegX ($00, @_disp_buff)
-
-PUB DispAddr
-
-    return @_disp_buff
-
-PUB Display(enabled)
-
+PUB DisplayPower(enabled)
+' Power on display
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value is ignored
     case ||enabled
         0, 1: _disp_power := ||enabled
         OTHER:
             return
-    writeRegX (core#CMD_DISPSETUP, _blink_freq | _disp_power)
+
+    writeReg (core#CMD_DISPSETUP, _blink_freq | _disp_power)
 
 PUB Oscillator(enabled)
-
+' Enable the oscillator
+'   Valid values: TRUE (-1 or 1), FALSE (0)
+'   Any other value is ignored
     case ||enabled
         0, 1: enabled := ||enabled
         OTHER:
             return
-    writeRegX (core#CMD_OSCILLATOR, enabled)
-
-PUB PlotPoint (x, y, c)
-
-    x := 0 #> x <# 7
-    y := 0 #> y <# 7
-    x := x + 7
-    x := x // 8
-    case c
-        -1:
-            _disp_buff[y] := !(1 << x)
-
-        0:
-            _disp_buff[y] &= (1 << x)
-
-        1:
-            _disp_buff[y] |= (1 << x)
-        OTHER:
-            return
-
-    writeRegX ($00, @_disp_buff)
+    writeReg (core#CMD_OSCILLATOR, enabled)
 
 PUB RowInt(output_pin)
 
@@ -140,13 +135,13 @@ PUB RowInt(output_pin)
         0, 1, 3:
         OTHER:
             return
-    writeRegX (core#CMD_ROWINT, output_pin)
+    writeReg (core#CMD_ROWINT, output_pin)
 
-PUB WriteBuff
+PUB Update
+' Write display buffer to display
+    writeReg ($00, _draw_buffer)
 
-    writeRegX ($00, @_disp_buff)
-
-PUB writeRegX(reg, buf_addr) | cmd_packet[2], i
+PRI writeReg(reg, buff_addr) | cmd_packet[2], i
 ' Write nr_bytes to register 'reg' stored in val
     cmd_packet.byte[0] := SLAVE_WR' | _addr_bit
 
@@ -156,109 +151,17 @@ PUB writeRegX(reg, buf_addr) | cmd_packet[2], i
             i2c.start
             i2c.wr_block (@cmd_packet, 2)
             repeat i from 0 to 7
-                i2c.write ((byte[buf_addr][i]) & $FF)
+                i2c.write ((byte[buff_addr][i]) & $FF)
                 i2c.write ($00)
             i2c.stop
 
         $20, $80, $A0, $E0, $D9:                        'Control registers
-            cmd_packet.byte[1] := reg | buf_addr
+            cmd_packet.byte[1] := reg | buff_addr
             i2c.start
             i2c.wr_block (@cmd_packet, 2)
             i2c.stop
         OTHER:
             return
-
-DAT
-
-   font byte    %01111100
-        byte    %01000100
-        byte    %01000100
-        byte    %01000100
-        byte    %01000100
-        byte    %01000100
-        byte    %01000100
-        byte    %01111100
-
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-
-        byte    %01111100
-        byte    %00000100
-        byte    %00000100
-        byte    %01111100
-        byte    %01000000
-        byte    %01000000
-        byte    %01000000
-        byte    %01111100
-
-        byte    %01111100
-        byte    %00000100
-        byte    %00000100
-        byte    %01111100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %01111100
-
-        byte    %01000100
-        byte    %01000100
-        byte    %01000100
-        byte    %01111100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-
-        byte    %01111100
-        byte    %01000000
-        byte    %01000000
-        byte    %01111100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %01111100
-
-        byte    %01111100
-        byte    %01000000
-        byte    %01000000
-        byte    %01111100
-        byte    %01000100
-        byte    %01000100
-        byte    %01000100
-        byte    %01111100
-
-        byte    %01111100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-
-        byte    %01111100
-        byte    %01000100
-        byte    %01000100
-        byte    %01111100
-        byte    %01000100
-        byte    %01000100
-        byte    %01000100
-        byte    %01111100
-
-        byte    %01111100
-        byte    %01000100
-        byte    %01000100
-        byte    %01111100
-        byte    %00000100
-        byte    %00000100
-        byte    %00000100
-        byte    %01111100
 
 DAT
 {
