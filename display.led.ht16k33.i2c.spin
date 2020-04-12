@@ -26,7 +26,7 @@ CON
 
 VAR
 
-    long _draw_buffer
+    long _ptr_drawbuffer
     word _buff_sz
     byte _disp_width, _disp_height, _disp_xmax, _disp_ymax
     byte _disp_power, _blink_freq, _disp_buff[8]
@@ -76,11 +76,11 @@ PUB Address(addr)
 ' Set framebuffer address
     case addr
         $0004..$7FFF-_buff_sz:
-            _draw_buffer := addr
-            result := _draw_buffer
+            _ptr_drawbuffer := addr
+            result := _ptr_drawbuffer
             return
         OTHER:
-            result := _draw_buffer
+            result := _ptr_drawbuffer
             return
 
 PUB BlinkRate(rate_hz)
@@ -139,7 +139,7 @@ PUB RowInt(output_pin)
 
 PUB Update
 ' Write display buffer to display
-    writeReg (core#DISP_RAM, _draw_buffer)
+    writeReg (core#DISP_RAM, _ptr_drawbuffer)
 
 PRI writeReg(reg, buff_addr) | cmd_packet[2], i
 ' Write nr_bytes to register 'reg' stored in val
