@@ -47,6 +47,8 @@ VAR
 PUB Main{} | i
 
     setup{}
+    matrix.fontsize(6, 8)
+    matrix.fontaddress(fnt.baseaddr{})
 
     matrix.fgcolor(1)                           ' fg/bg color of following text
     matrix.bgcolor(0)                           '   (colors: -1, 0, 1)
@@ -100,8 +102,6 @@ PUB Setup{}
     ser.strln(string("Serial terminal started"))
     if matrix.startx(WIDTH, HEIGHT, I2C_SCL, I2C_SDA, I2C_HZ, ADDR_BITS, @_framebuff)
         ser.strln(string("HT16K33 driver started"))
-        matrix.fontsize(6, 8)
-        matrix.fontaddress(fnt.baseaddr{})
     else
         ser.strln(string("HT16K33 driver failed to start - halting"))
         matrix.stop{}

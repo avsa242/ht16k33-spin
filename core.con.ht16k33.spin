@@ -20,11 +20,21 @@ CON
 ' Registers/commands
     DISP_RAM        = $00                       ' Start of display RAM
 
-    CMD_OSCILLATOR  = $20                       ' command is upper nibble
-    CMD_DISPSETUP   = $80                       '   parameter is OR'd with it
-    CMD_ROWINT      = $A0
-    CMD_BRIGHTNESS  = $E0
-    CMD_TESTMODE    = $D9
+' command is upper nibble
+' parameter is OR'd with it
+    OSCILLATOR      = $20
+
+    DISPSETUP       = $80
+    DISPSETUP_MASK  = $07
+        BLINK       = 1
+        ONOFF       = 0
+        BLINK_BITS  = %11
+        BLINK_MASK  = (BLINK_BITS << BLINK) ^ DISPSETUP_MASK
+        ONOFF_MASK  = 1 ^ DISPSETUP_MASK
+
+    ROWINT          = $A0
+    BRIGHTNESS      = $E0
+    TESTMODE        = $D9
 
 PUB Null{}
 ' This is not a top-level object

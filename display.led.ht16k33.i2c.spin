@@ -25,12 +25,17 @@ CON
     DEF_SDA     = 29
     DEF_HZ      = 100_000
 
+' Display visibility
+    OFF         = 0
+    ON          = 1
+
 VAR
 
     long _ptr_drawbuffer
     word _buff_sz
     byte _disp_width, _disp_height, _disp_xmax, _disp_ymax
-    byte _disp_power, _blink_freq, _disp_buff[8]
+    byte _disp_buff[8]
+    byte _dispsetup
     byte _addr_bits
     byte BYTESPERLN
 
@@ -52,8 +57,8 @@ PUB Startx(width, height, SCL_PIN, SDA_PIN, I2C_HZ, ADDR_BITS, ptr_disp): okay
     if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31)
         if I2C_HZ =< core#I2C_MAX_FREQ
             if lookdown(ADDR_BITS: %000..%111)
-                time.usleep(core#T_POR)         ' wait _before_ bus activity
                 if okay := i2c.setupx(SCL_PIN, SDA_PIN, I2C_HZ)
+                    time.usleep(core#T_POR)
                     _addr_bits := ADDR_BITS << 1
                     if i2c.present(SLAVE_WR | _addr_bits)
                         defaults{}
@@ -71,7 +76,7 @@ PUB Startx(width, height, SCL_PIN, SDA_PIN, I2C_HZ, ADDR_BITS, ptr_disp): okay
 
 PUB Stop{}
 
-    powered(FALSE)
+    displayvisibility(FALSE)
     oscenabled(FALSE)
     time.msleep(100)
     i2c.terminate
@@ -80,7 +85,7 @@ PUB Defaults{}
 
     oscenabled(TRUE)
     brightness(15)
-    powered(TRUE)
+    displayvisibility(TRUE)
 
 PUB Address(addr): curr_addr
 ' Set framebuffer address
@@ -91,17 +96,24 @@ PUB Address(addr): curr_addr
         other:
             return _ptr_drawbuffer
 
-PUB BlinkRate(rate_hz)
+PUB BlinkRate(rate)
 ' Set blink rate of display, in Hz
-'   Valid values: 0.5, 5, 1, 2
+'   Valid values: 0_5 (0.5), 1, 2
 '   Any other value disables blinking
-    case rate_hz
-        2:      _blink_freq := %01 << 1
-        1:      _blink_freq := %10 << 1
-        0.5, 5: _blink_freq := %11 << 1
-        other:  _blink_freq := %00 << 1
+    case rate
+        0:
+            rate := 0
+        0_5:
+            rate := %11 << core#BLINK
+        1:
+            rate := %10 << core#BLINK
+        2:
+            rate := %01 << core#BLINK
+        other:
+            return
 
-    writereg(core#CMD_DISPSETUP, _blink_freq | _disp_power)
+    _dispsetup := ((_dispsetup & core#BLINK_MASK) | rate)
+    writereg(core#DISPSETUP, _dispsetup)
 
 PUB Brightness(level)
 ' Set display brightness
@@ -111,10 +123,25 @@ PUB Brightness(level)
         0..15:
         other:
             return
-    writereg(core#CMD_BRIGHTNESS, level)
+    writereg(core#BRIGHTNESS, level)
 
 PUB ClearAccel{}
 ' Dummy method
+
+PUB DisplayVisibility(state)
+' Enable display visibility
+'   Valid values: TRUE/ON (-1 or 1), FALSE/OFF (0)
+'   Any other value is ignored
+'   NOTE: This doesn't affect display RAM contents;
+'       only whether it's currently displayed or not
+    case ||(state)
+        OFF, ON:
+            state := ||(state)
+        other:
+            return
+
+    _dispsetup := ((_dispsetup & core#ONOFF_MASK) | state)
+    writereg(core#DISPSETUP, _dispsetup)
 
 PUB OscEnabled(state)
 ' Enable the oscillator
@@ -124,18 +151,7 @@ PUB OscEnabled(state)
         0, 1: state := ||(state)
         other:
             return
-    writereg(core#CMD_OSCILLATOR, state)
-
-PUB Powered(state)
-' Power on display
-'   Valid values: TRUE (-1 or 1), FALSE (0)
-'   Any other value is ignored
-    case ||(state)
-        0, 1: _disp_power := ||(state)
-        other:
-            return
-
-    writereg(core#CMD_DISPSETUP, _blink_freq | _disp_power)
+    writereg(core#OSCILLATOR, state)
 
 PUB Update{}
 ' Write display buffer to display
@@ -155,8 +171,8 @@ PRI writeReg(reg, ptr_buff) | cmd_packet[2], i
                 i2c.write($00)
             i2c.stop{}
 
-        core#CMD_OSCILLATOR, core#CMD_DISPSETUP, core#CMD_ROWINT, {
-        } core#CMD_BRIGHTNESS:                  ' Control registers
+        core#OSCILLATOR, core#DISPSETUP, core#ROWINT, {
+        } core#BRIGHTNESS:                  ' Control registers
             cmd_packet.byte[1] := reg | ptr_buff
             i2c.start{}
             i2c.wr_block(@cmd_packet, 2)
