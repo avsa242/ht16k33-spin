@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2020
     Created: Nov 21, 2020
-    Updated: Nov 21, 2020
+    Updated: Nov 22, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -20,9 +20,10 @@ CON
     SER_BAUD    = 115_200
     LED         = cfg#LED1
 
-    I2C_SCL     = 1
-    I2C_SDA     = 0
-    I2C_HZ      = 1_000_000
+    I2C_SCL     = 28
+    I2C_SDA     = 29
+    I2C_HZ      = 400_000                       ' max is 400_000
+    ADDR_BITS   = %000                          ' %000..%111
 
     WIDTH       = 8
     HEIGHT      = 8
@@ -433,7 +434,7 @@ PUB Setup{}
     time.msleep(100)
     ser.clear{}
     ser.str (string("Serial terminal started", ser#CR, ser#LF))
-    if disp.startx(WIDTH, HEIGHT, I2C_SCL, I2C_SDA, I2C_HZ, @_framebuff)
+    if disp.startx(WIDTH, HEIGHT, I2C_SCL, I2C_SDA, I2C_HZ, ADDR_BITS, @_framebuff)
         ser.str(string("HT16K33 driver started. Draw buffer @ $"))
         ser.hex(disp.Address(-2), 8)
         disp.defaults{}
@@ -447,7 +448,7 @@ PUB Setup{}
 
 PUB Stop{}
 
-    disp.powered(FALSE)
+    disp.displayvisibility(FALSE)
     disp.stop{}
     cogstop(_timer_cog)
     ser.stop{}
