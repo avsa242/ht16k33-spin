@@ -4,7 +4,7 @@
     Description: Driver for HT16K33-based LED matrix displays
     Author: Jesse Burt
     Created: Oct 11, 2018
-    Updated: Feb 8, 2020
+    Updated: Nov 21, 2020
     Copyright (c) 2020
     See end of file for terms of use.
     --------------------------------------------
@@ -42,10 +42,13 @@ OBJ
 PUB Null{}
 ' This is not a top-level object
 
-PUB Startx(width, height, SCL_PIN, SDA_PIN, I2C_HZ, dispbuffer_address): okay
-
+PUB Startx(width, height, SCL_PIN, SDA_PIN, I2C_HZ, ptr_disp): okay
+' width, height: dimensions of matrix, in pixels
+' SCL_PIN, SDA_PIN, I2C_HZ: I2C bus I/O pins and speed
+' ptr_disp: pointer to display buffer, of minimum (W*H)/8 bytes
+'   (e.g., for an 8x8 matrix, 8*8=64 / 8 = 8 bytes)
     if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31)
-'        if I2C_HZ =< core#I2C_MAX_FREQ
+        if I2C_HZ =< core#I2C_MAX_FREQ
             if okay := i2c.setupx(SCL_PIN, SDA_PIN, I2C_HZ)
                 time.usleep(100)
                 if i2c.present(SLAVE_WR)
@@ -57,22 +60,21 @@ PUB Startx(width, height, SCL_PIN, SDA_PIN, I2C_HZ, dispbuffer_address): okay
                     _buff_sz := (_disp_width * _disp_height) / 8
                     BYTESPERLN := _disp_width * BYTESPERPX
 
-                    address(dispbuffer_address)
+                    address(ptr_disp)
 
                     return okay
-    return FALSE                                        'If we got here, something went wrong
+    return FALSE                                ' something above failed
 
 PUB Stop{}
 
     powered(FALSE)
-    oscillator(FALSE)
+    oscenabled(FALSE)
     time.msleep(100)
     i2c.terminate
 
 PUB Defaults{}
 
-    oscillator(TRUE)
-    rowint(0)
+    oscenabled(TRUE)
     brightness(15)
     powered(TRUE)
 
@@ -110,7 +112,7 @@ PUB Brightness(level)
 PUB ClearAccel{}
 ' Dummy method
 
-PUB Oscillator(state)
+PUB OscEnabled(state)
 ' Enable the oscillator
 '   Valid values: TRUE (-1 or 1), FALSE (0)
 '   Any other value is ignored
@@ -130,14 +132,6 @@ PUB Powered(state)
             return
 
     writereg(core#CMD_DISPSETUP, _blink_freq | _disp_power)
-
-PUB RowInt(output_pin)
-
-    case output_pin
-        0, 1, 3:
-        other:
-            return
-    writereg(core#CMD_ROWINT, output_pin)
 
 PUB Update{}
 ' Write display buffer to display
