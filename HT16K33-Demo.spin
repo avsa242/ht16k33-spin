@@ -10,36 +10,35 @@
     --------------------------------------------
 }
 
-#define FPS_MON_ENABLE  ' Optionally undef/comment out to disable the terminal framerate monitor
+' Optionally undef/comment out to disable the terminal framerate monitor
+#define FPS_MON_ENABLE
 
 CON
 
     _clkmode    = cfg#_CLKMODE
     _xinfreq    = cfg#_XINFREQ
 
-    BUFFSZ      = (WIDTH * HEIGHT) / 8
-    XMAX        = WIDTH-1
-    YMAX        = HEIGHT-1
+' -- User-modifiable constants
+    SER_BAUD    = 115_200
+    LED         = cfg#LED1
+
+    I2C_SCL     = 1
+    I2C_SDA     = 0
+    I2C_HZ      = 3_400_000
 
     WIDTH       = 8
     HEIGHT      = 8
+' --
 
-    I2C_SCL     = 29
-    I2C_SDA     = 28
-    I2C_HZ      = 1_000_000
-
-    SER_RX      = 31
-    SER_TX      = 30
-    SER_BAUD    = 115_200
-
-    LED         = cfg#LED1
+    BUFFSZ      = (WIDTH * HEIGHT) / 8
+    XMAX        = WIDTH-1
+    YMAX        = HEIGHT-1
 
 OBJ
 
     cfg     : "core.con.boardcfg.flip"
     ser     : "com.serial.terminal.ansi"
     time    : "time"
-    io      : "io"
     int     : "string.integer"
     matrix  : "display.led.ht16k33.i2c"
     fnt     : "font.5x8"
@@ -55,6 +54,7 @@ VAR
 PUB Main
 
     Setup
+
     _frames := 0
     _ser_row := 3
 
@@ -74,11 +74,7 @@ PUB Main
     Demo_LineSweep(250)
     matrix.ClearAll
 
-    Demo_Chase(50)
-    matrix.ClearAll
-
     Stop
-    FlashLED(LED, 100)
 
 PUB Demo_Char(reps) | ch
 ' Sequentially draws the whole font table to the screen, then random characters
@@ -103,37 +99,6 @@ PUB Demo_Char(reps) | ch
         matrix.Char (rnd(fnt#LASTCHAR))
         matrix.Update
         _frames++
-
-PUB Demo_Chase(reps) | x, y
-
-    _ser_row++
-    ser.Position(0, _ser_row)
-    ser.Str(string("Demo_Chase"))
-
-     repeat reps
-        repeat x from 0 to 7
-            matrix.Clear
-            matrix.Plot(x, 0, 1)
-            time.MSleep (||cnt >> 24)
-            matrix.Update
-
-        repeat y from 1 to 7
-            matrix.Clear
-            matrix.Plot(7, y, 1)
-            time.MSleep (||cnt >> 24)
-            matrix.Update
-
-        repeat x from 6 to 0
-            matrix.Clear
-            matrix.Plot(x, 7, 1)
-            time.MSleep (||cnt >> 24)
-            matrix.Update
-
-        repeat y from 6 to 1
-            matrix.Clear
-            matrix.Plot(0, y, 1)
-            time.MSleep (||cnt >> 24)
-            matrix.Update
 
 PUB Demo_Circle(reps) | x, y, r
 ' Draws circles at random locations
@@ -218,37 +183,32 @@ PUB FPS_mon
 
 PUB Setup
 
-    repeat until _ser_cog := ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
-    time.MSleep(30)
-    ser.Clear
-    ser.Str (string("Serial terminal started", ser#CR, ser#LF))
-    if matrix.Startx(WIDTH, HEIGHT, I2C_SCL, I2C_SDA, I2C_HZ, @_framebuff)
-        ser.Str (string("HT16K33 driver started", ser#CR, ser#LF))
-        matrix.FontSize (6, 8)
-        matrix.FontAddress (fnt.BaseAddr)
-
+    ser.start(SER_BAUD)
+    time.msleep(30)
+    ser.clear{}
+    ser.strln(string("Serial terminal started"))
+    if matrix.startx(WIDTH, HEIGHT, I2C_SCL, I2C_SDA, I2C_HZ, @_framebuff)
+        ser.strln(string("HT16K33 driver started"))
+        matrix.fontsize(6, 8)
+        matrix.fontaddress(fnt.baseaddr{})
     else
-        ser.Str (string("HT16K33 driver failed to start - halting", ser#CR, ser#LF))
-        matrix.Stop
-        time.MSleep(5)
-        ser.Stop
-        FlashLED(LED, 500)
+        ser.strln(string("HT16K33 driver failed to start - halting"))
+        matrix.stop{}
+        time.msleep(5)
+        ser.stop{}
 
 #ifdef FPS_MON_ENABLE
     _fps_mon_cog := cognew(FPS_mon, @_fps_mon_stack)  'Start framerate monitor in another cog/core
 #endif
 
-PUB Stop
+PUB Stop{}
 
-    matrix.DisplayPower(FALSE)
-    matrix.Stop
+    matrix.stop{}
 
     if _fps_mon_cog
         cogstop(_fps_mon_cog)
     if _ser_cog
         cogstop(_ser_cog)
-
-#include "lib.utility.spin"
 
 DAT
 
