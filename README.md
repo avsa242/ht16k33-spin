@@ -7,8 +7,9 @@ This is a P8X32A/Propeller driver object for the Holtek HT16K33 LED Matrix/Segme
 
 ## Salient Features
 
-* I2C connection at up to 1MHz
+* I2C connection at up to 400kHz
 * Set display brightness, blinking
+* Multiple address support
 * Supports Adafruit variant of the 8x8 matrix
 
 ## Requirements
@@ -34,12 +35,11 @@ P1/SPIN1:
 * Very early in development - may malfunction or outright fail to build
 * Written using Adafruit 8x8 backpack for development, the pixel layout of which differs from some other boards, so the display may not (yet) look correct on others
 * Doesn't support LED segment displays, specifically (planned)
-* Doesn't support alternate slave addresses (planned)
 * Doesn't support 16 pixel-wide displays (planned)
 
 ## TODO
 
 - [ ] Implement support for non-Adafruit displays, other size displays, segmented displays
-- [ ] Implement support for alternate slave addresses
+- [x] Implement support for alternate slave addresses
 - [ ] Port to P2/SPIN2
 

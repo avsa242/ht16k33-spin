@@ -4,7 +4,7 @@
     Description: Simplified Demo of the HT16K33 driver
     Author: Jesse Burt
     Created: Nov 21, 2020
-    Updated: Nov 21, 2020
+    Updated: Nov 22, 2020
     Copyright (c) 2020
     See end of file for terms of use.
     --------------------------------------------
@@ -19,9 +19,10 @@ CON
     SER_BAUD    = 115_200
     LED         = cfg#LED1
 
-    I2C_SCL     = 1
-    I2C_SDA     = 0
-    I2C_HZ      = 1_000_000
+    I2C_SCL     = 28
+    I2C_SDA     = 29
+    I2C_HZ      = 400_000                       ' 400_000 max
+    ADDR_BITS   = %000                          ' %000..%111
 
     WIDTH       = 8
     HEIGHT      = 8
@@ -97,7 +98,7 @@ PUB Setup{}
     time.msleep(30)
     ser.clear{}
     ser.strln(string("Serial terminal started"))
-    if matrix.startx(WIDTH, HEIGHT, I2C_SCL, I2C_SDA, I2C_HZ, @_framebuff)
+    if matrix.startx(WIDTH, HEIGHT, I2C_SCL, I2C_SDA, I2C_HZ, ADDR_BITS, @_framebuff)
         ser.strln(string("HT16K33 driver started"))
         matrix.fontsize(6, 8)
         matrix.fontaddress(fnt.baseaddr{})

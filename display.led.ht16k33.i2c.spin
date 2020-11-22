@@ -4,7 +4,7 @@
     Description: Driver for HT16K33-based LED matrix displays
     Author: Jesse Burt
     Created: Oct 11, 2018
-    Updated: Nov 21, 2020
+    Updated: Nov 22, 2020
     Copyright (c) 2020
     See end of file for terms of use.
     --------------------------------------------
@@ -31,6 +31,7 @@ VAR
     word _buff_sz
     byte _disp_width, _disp_height, _disp_xmax, _disp_ymax
     byte _disp_power, _blink_freq, _disp_buff[8]
+    byte _addr_bits
     byte BYTESPERLN
 
 OBJ
@@ -42,27 +43,30 @@ OBJ
 PUB Null{}
 ' This is not a top-level object
 
-PUB Startx(width, height, SCL_PIN, SDA_PIN, I2C_HZ, ptr_disp): okay
+PUB Startx(width, height, SCL_PIN, SDA_PIN, I2C_HZ, ADDR_BITS, ptr_disp): okay
 ' width, height: dimensions of matrix, in pixels
 ' SCL_PIN, SDA_PIN, I2C_HZ: I2C bus I/O pins and speed
+' ADDR_BITS: specify LSBs of slave address (%000..%111)
 ' ptr_disp: pointer to display buffer, of minimum (W*H)/8 bytes
 '   (e.g., for an 8x8 matrix, 8*8=64 / 8 = 8 bytes)
     if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31)
         if I2C_HZ =< core#I2C_MAX_FREQ
-            if okay := i2c.setupx(SCL_PIN, SDA_PIN, I2C_HZ)
-                time.usleep(100)
-                if i2c.present(SLAVE_WR)
-                    defaults{}
-                    _disp_width := width
-                    _disp_height := height
-                    _disp_xmax := _disp_width-1
-                    _disp_ymax := _disp_height-1
-                    _buff_sz := (_disp_width * _disp_height) / 8
-                    BYTESPERLN := _disp_width * BYTESPERPX
+            if lookdown(ADDR_BITS: %000..%111)
+                time.usleep(core#T_POR)         ' wait _before_ bus activity
+                if okay := i2c.setupx(SCL_PIN, SDA_PIN, I2C_HZ)
+                    _addr_bits := ADDR_BITS << 1
+                    if i2c.present(SLAVE_WR | _addr_bits)
+                        defaults{}
+                        _disp_width := width
+                        _disp_height := height
+                        _disp_xmax := _disp_width-1
+                        _disp_ymax := _disp_height-1
+                        _buff_sz := (_disp_width * _disp_height) / 8
+                        BYTESPERLN := _disp_width * BYTESPERPX
 
-                    address(ptr_disp)
+                        address(ptr_disp)
 
-                    return okay
+                        return okay
     return FALSE                                ' something above failed
 
 PUB Stop{}
@@ -138,12 +142,12 @@ PUB Update{}
     writereg(core#DISP_RAM, _ptr_drawbuffer)
 
 PRI writeReg(reg, ptr_buff) | cmd_packet[2], i
-' Write nr_bytes to register 'reg' stored in val
-    cmd_packet.byte[0] := SLAVE_WR' | _addr_bit
+' Write reg to device from ptr_buff
+    cmd_packet.byte[0] := SLAVE_WR | _addr_bits
 
     case reg
-        $00:                                            'Display RAM
-            cmd_packet.byte[1] := $00
+        core#DISP_RAM:                          ' Display RAM
+            cmd_packet.byte[1] := core#DISP_RAM
             i2c.start{}
             i2c.wr_block(@cmd_packet, 2)
             repeat i from 0 to 7
@@ -151,7 +155,8 @@ PRI writeReg(reg, ptr_buff) | cmd_packet[2], i
                 i2c.write($00)
             i2c.stop{}
 
-        $20, $80, $A0, $E0, $D9:                        'Control registers
+        core#CMD_OSCILLATOR, core#CMD_DISPSETUP, core#CMD_ROWINT, {
+        } core#CMD_BRIGHTNESS:                  ' Control registers
             cmd_packet.byte[1] := reg | ptr_buff
             i2c.start{}
             i2c.wr_block(@cmd_packet, 2)

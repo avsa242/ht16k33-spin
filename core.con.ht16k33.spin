@@ -1,10 +1,11 @@
 {
     --------------------------------------------
     Filename: core.con.ht16k33.spin
+    Description: Low-level constants
     Author: Jesse Burt
     Created Oct 9, 2018
-    Updated Oct 9, 2018
-    Copyright (c) 2018
+    Updated Nov 22, 2020
+    Copyright (c) 2020
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -12,19 +13,21 @@
 CON
 
     SLAVE_ADDR      = $70 << 1
-    I2C_DEF_FREQ    = 400_000
-    I2C_MAX_FREQ    = 1_000_000
+    I2C_MAX_FREQ    = 400_000
 
-    DISP_RAM        = $00                                   ' Start of display RAM
+    T_POR           = 1_000                     ' usec
 
-    CMD_OSCILLATOR  = $20
-    CMD_DISPSETUP   = $80
+' Registers/commands
+    DISP_RAM        = $00                       ' Start of display RAM
+
+    CMD_OSCILLATOR  = $20                       ' command is upper nibble
+    CMD_DISPSETUP   = $80                       '   parameter is OR'd with it
     CMD_ROWINT      = $A0
     CMD_BRIGHTNESS  = $E0
     CMD_TESTMODE    = $D9
 
-PUB Null
-''This is not a top-level object
+PUB Null{}
+' This is not a top-level object
 
 DAT
 {
