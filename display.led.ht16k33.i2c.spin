@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2022
     Created: Oct 11, 2018
-    Updated: Jan 25, 2022
+    Updated: Jan 30, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -32,13 +32,8 @@ CON
 
 VAR
 
-    long _ptr_drawbuffer
-    word _buff_sz
-    byte _disp_width, _disp_height, _disp_xmax, _disp_ymax
-    byte _disp_buff[8]
     byte _dispsetup
     byte _addr_bits
-    byte _bytesperln
 
 OBJ
 
