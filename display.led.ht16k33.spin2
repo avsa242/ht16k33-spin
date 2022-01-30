@@ -1,6 +1,6 @@
 {
     --------------------------------------------
-    Filename: display.led.ht16k33.i2c.spin2
+    Filename: display.led.ht16k33.spin2
     Description: Driver for HT16K33-based LED matrix displays (P2 version)
     Author: Jesse Burt
     Copyright (c) 2022
@@ -39,7 +39,6 @@ OBJ
 
     i2c     : "com.i2c"
     core    : "core.con.ht16k33"
-    time    : "time"
 
 PUB Null()
 ' This is not a top-level object

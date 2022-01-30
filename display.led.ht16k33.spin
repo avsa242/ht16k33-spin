@@ -1,6 +1,6 @@
 {
     --------------------------------------------
-    Filename: display.led.ht16k33.i2c.spin
+    Filename: display.led.ht16k33.spin
     Description: Driver for HT16K33-based LED matrix displays
     Author: Jesse Burt
     Copyright (c) 2022

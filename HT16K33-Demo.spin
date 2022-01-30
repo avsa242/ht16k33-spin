@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2022
     Created: Nov 21, 2020
-    Updated: Jan 25, 2022
+    Updated: Jan 30, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -38,7 +38,7 @@ OBJ
     cfg : "core.con.boardcfg.flip"
     ser : "com.serial.terminal.ansi"
     time: "time"
-    disp: "display.led.ht16k33.i2c"
+    disp: "display.led.ht16k33"
     int : "string.integer"
     fnt : "font.5x8"
 
@@ -96,7 +96,7 @@ PUB Main{} | time_ms
     demo_rndtext(time_ms)
     disp.clear{}
 
-    stop{}
+    repeat
 
 PUB Demo_Bitmap(testtime, bitmap_addr) | iteration
 ' Continuously redraws bitmap at address bitmap_addr
@@ -429,17 +429,9 @@ PUB Setup{}
         disp.fontaddress(fnt.baseaddr{})
     else
         ser.str(string("HT16K33 driver failed to start - halting"))
-        stop{}
+        repeat
 
     _timer_cog := cognew(cog_Timer, @_stack_timer)
-
-PUB Stop{}
-
-    disp.displayvisibility(FALSE)
-    disp.stop{}
-    cogstop(_timer_cog)
-    ser.stop{}
-    repeat
 
 DAT
 
