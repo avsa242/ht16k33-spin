@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2022
     Created: Jun 22, 2021
-    Updated: Jan 30, 2022
+    Updated: Aug 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -38,7 +38,6 @@ OBJ
     ser : "com.serial.terminal.ansi"
     time: "time"
     disp: "display.led-seg.ht16k33"
-    int : "string.integer"
     fs  : "string.float"
     
 PUB Main{} | i, b

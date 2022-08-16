@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2022
     Created: Jun 22, 2021
-    Updated: Jan 30, 2022
+    Updated: Aug 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -37,7 +37,6 @@ OBJ
     cfg : "core.con.boardcfg.p2eval"
     ser : "com.serial.terminal.ansi"
     disp: "display.led-seg.ht16k33"
-    int : "string.integer"
     fs  : "string.float"
     
 PUB Main() | i, b

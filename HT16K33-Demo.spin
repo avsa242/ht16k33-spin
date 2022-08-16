@@ -22,7 +22,7 @@ CON
 
     I2C_SCL     = 28
     I2C_SDA     = 29
-    I2C_HZ      = 400_000                       ' max is 400_000
+    I2C_FREQ    = 400_000                       ' max is 400_000
     ADDR_BITS   = %000                          ' %000..%111
 
     WIDTH       = 8
@@ -39,14 +39,13 @@ OBJ
     ser : "com.serial.terminal.ansi"
     time: "time"
     disp: "display.led.ht16k33"
-    int : "string.integer"
     fnt : "font.5x8"
+    math: "math.int"
 
 VAR
 
     long _stack_timer[50]
     long _timer_set
-    long _rnd_seed
     byte _framebuff[BUFFSZ]
     byte _timer_cog
 
@@ -118,9 +117,9 @@ PUB Demo_Circle(testtime) | iteration, x, y, r
     iteration := 0
 
     repeat while _timer_set
-        x := rnd(XMAX)
-        y := rnd(YMAX)
-        r := rnd(HEIGHT/2)
+        x := math.rndi(XMAX)
+        y := math.rndi(YMAX)
+        r := math.rndi(HEIGHT/2)
         disp.circle(x, y, r, -1, false)
         disp.update{}
         iteration++
@@ -151,7 +150,7 @@ PUB Demo_Line(testtime) | iteration
     iteration := 0
 
     repeat while _timer_set
-        disp.line(rnd(XMAX), rnd(YMAX), rnd(XMAX), rnd(YMAX), -1)
+        disp.line(math.rndi(XMAX), math.rndi(YMAX), math.rndi(XMAX), math.rndi(YMAX), -1)
         disp.update{}
         iteration++
 
@@ -220,7 +219,7 @@ PUB Demo_Plot(testtime) | iteration, x, y
     iteration := 0
 
     repeat while _timer_set
-        disp.plot(rnd(XMAX), rnd(YMAX), -1)
+        disp.plot(math.rndi(XMAX), math.rndi(YMAX), -1)
         disp.update{}
         iteration++
 
@@ -240,7 +239,7 @@ PUB Demo_Sinewave(testtime) | iteration, x, y, modifier, offset, div
     repeat while _timer_set
         repeat x from 0 to XMAX
             modifier := ||(cnt) / 10_000        ' Use system counter as modifier
-            y := offset + sin(x * modifier) / div
+            y := offset + math.sin(x * modifier) / div
             disp.plot(x, y, 1)
 
         disp.update{}
@@ -293,7 +292,7 @@ PUB Demo_RndText(testtime) | iteration, col, row, maxcol, maxrow, ch, st
                 if ch > $7F
                     ch := $00
                 disp.position(col, row)
-                disp.char(rnd(127))
+                disp.char(math.rnd(127))
         disp.update{}
         iteration++
 
@@ -324,7 +323,6 @@ PUB Demo_TriWave(testtime) | iteration, x, y, ydir
 
 PUB Demo_Wander(testtime) | iteration, x, y, d
 ' Draws randomly wandering pixels
-    _rnd_seed := cnt
     x := XMAX/2
     y := YMAX/2
 
@@ -333,7 +331,7 @@ PUB Demo_Wander(testtime) | iteration, x, y, d
     iteration := 0
 
     repeat while _timer_set
-        case d := rnd(4)
+        case d := math.rndi(4)
             1:
                 x += 2
                 if x > XMAX
@@ -356,53 +354,12 @@ PUB Demo_Wander(testtime) | iteration, x, y, d
 
     report(testtime, iteration)
 
-PUB Sin(angle): sine
-' Return the sine of angle
-    sine := angle << 1 & $FFE
-    if angle & $800
-       sine := word[$F000 - sine]               ' Use sine table from ROM
-    else
-       sine := word[$E000 + sine]
-    if angle & $1000
-       -sine
-
-PUB RND(maxval): rndn
-' Return random number up to maxval
-    rndn := ?_rnd_seed
-    rndn >>= 16
-    rndn *= (maxval + 1)
-    rndn >>= 16
-
 PRI Report(testtime, iterations) 
 
-    ser.str(string("Total iterations: "))
-    ser.dec(iterations)
-
-    ser.str(string(", Iterations/sec: "))
-    ser.dec(iterations / (testtime/1000))
-
-    ser.str(string(", Iterations/ms: "))
-    decimal((iterations * 1_000) / testtime, 1_000)
-    ser.newline{}
-
-PRI Decimal(scaled, divisor) | whole[4], part[4], places, tmp
-' Display a fixed-point scaled up number in decimal-dot notation - scale it back down by divisor
-'   e.g., Decimal (314159, 100000) would display 3.14159 on the termainl
-'   scaled: Fixed-point scaled up number
-'   divisor: Divide scaled-up number by this amount
-    whole := scaled / divisor
-    tmp := divisor
-    places := 0
-
-    repeat
-        tmp /= 10
-        places++
-    until tmp == 1
-    part := int.deczeroed(||(scaled // divisor), places)
-
-    ser.dec(whole)
-    ser.char(".")
-    ser.str(part)
+    ser.printf1(string("Total iterations: %d, "), iterations)
+    ser.printf1(string("iterations/sec: %d,"), iterations / (testtime/1000))
+    ser.printf2(string("iterations/ms: %d.%03.3d\n\r"), ((iterations * 1_000) / testtime), {
+}   ((iterations * 1_000) // testtime))
 
 PRI cog_Timer{} | time_left
 
@@ -422,7 +379,7 @@ PUB Setup{}
     time.msleep(100)
     ser.clear{}
     ser.strln(string("Serial terminal started"))
-    if disp.startx(I2C_SCL, I2C_SDA, I2C_HZ, ADDR_BITS, WIDTH, HEIGHT, @_framebuff)
+    if disp.startx(I2C_SCL, I2C_SDA, I2C_FREQ, ADDR_BITS, WIDTH, HEIGHT, @_framebuff)
         ser.strln(string("HT16K33 driver started"))
         disp.defaults{}
         disp.fontsize(6, 8)
@@ -432,28 +389,27 @@ PUB Setup{}
         repeat
 
     _timer_cog := cognew(cog_Timer, @_stack_timer)
+    math.rndseed(cnt)
 
 DAT
 
     greet_str   byte    "HT16K33 on the Parallax P8X32A", 0
 
 {
-    --------------------------------------------------------------------------------------------------------
-    TERMS OF USE: MIT License
+Copyright 2022 Jesse Burt
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-    associated documentation files (the "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
-    following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all copies or substantial
-    portions of the Software.
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-    LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-    --------------------------------------------------------------------------------------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 }
