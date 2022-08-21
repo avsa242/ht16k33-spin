@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2022
     Created: Nov 21, 2020
-    Updated: Jan 30, 2022
+    Updated: Aug 21, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -384,6 +384,7 @@ PUB Setup{}
         disp.defaults{}
         disp.fontsize(6, 8)
         disp.fontaddress(fnt.baseaddr{})
+        disp.charattrs(disp#DRAWBG)
     else
         ser.str(string("HT16K33 driver failed to start - halting"))
         repeat
