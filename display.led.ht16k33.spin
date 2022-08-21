@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2022
     Created: Oct 11, 2018
-    Updated: Aug 16, 2022
+    Updated: Aug 21, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -125,6 +125,10 @@ PUB Brightness(level)
         other:
             return
     writereg(core#BRIGHTNESS, level)
+
+PUB CharAttrs(attrs)
+' Set character attributes
+    _char_attrs := attrs
 
 #ifndef GFX_DIRECT
 PUB Clear{}
