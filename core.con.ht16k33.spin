@@ -1,7 +1,7 @@
 {
     --------------------------------------------
     Filename: core.con.ht16k33.spin
-    Description: HT16K33 constants
+    Description: HT16K33-specific constants
     Author: Jesse Burt
     Created Oct 9, 2018
     Updated Nov 22, 2020
@@ -36,7 +36,7 @@ CON
     BRIGHTNESS      = $E0
     TESTMODE        = $D9
 
-PUB Null{}
+PUB null{}
 ' This is not a top-level object
 
 DAT
