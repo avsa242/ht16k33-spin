@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2022
     Created: Nov 21, 2020
-    Updated: Oct 5, 2022
+    Updated: Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -34,7 +34,7 @@ CON
 
 OBJ
 
-    cfg     : "core.con.boardcfg.flip"
+    cfg     : "boardcfg.flip"
     ser     : "com.serial.terminal.ansi"
     time    : "time"
     matrix  : "display.led.ht16k33"
@@ -49,7 +49,7 @@ PUB main{} | i
     setup{}
     matrix.defaults{}
     matrix.fontsize(6, 8)
-    matrix.fontaddress(fnt.baseaddr{})
+    matrix.fontaddress(fnt.ptr{})
 
     matrix.fgcolor(1)                           ' fg/bg color of following text
     matrix.bgcolor(0)                           '   (colors: -1, 0, 1)

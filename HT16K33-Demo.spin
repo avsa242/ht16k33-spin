@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2022
     Created: Nov 21, 2020
-    Updated: Oct 5, 2022
+    Updated: Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -35,7 +35,7 @@ CON
 
 OBJ
 
-    cfg : "core.con.boardcfg.flip"
+    cfg : "boardcfg.flip"
     ser : "com.serial.terminal.ansi"
     time: "time"
     disp: "display.led.ht16k33"
@@ -383,7 +383,7 @@ PUB setup{}
         ser.strln(string("HT16K33 driver started"))
         disp.defaults{}
         disp.fontsize(6, 8)
-        disp.fontaddress(fnt.baseaddr{})
+        disp.fontaddress(fnt.ptr{})
         disp.charattrs(disp#DRAWBG)
     else
         ser.str(string("HT16K33 driver failed to start - halting"))

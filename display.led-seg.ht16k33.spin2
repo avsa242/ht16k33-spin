@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2022
     Created: Jun 22, 2021
-    Updated: Oct 5, 2022
+    Updated: Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -38,7 +38,8 @@ PUB startx(SCL_PIN, SDA_PIN, I2C_HZ, ADDR_BITS, WIDTH, HEIGHT): status
     ' Lastly - make sure you have at least one free core/cog
     return FALSE
 
-PUB char(c) | cmd_pkt, i
+PUB char = putchar
+PUB putchar(c) | cmd_pkt, i
 ' Write character to display
 '   NOTE: Interprets control characters
     case c

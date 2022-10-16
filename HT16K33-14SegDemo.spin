@@ -5,7 +5,7 @@
     Author: Jesse Burt
     Copyright (c) 2022
     Created: Jun 22, 2021
-    Updated: Oct 5, 2022
+    Updated: Oct 16, 2022
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -34,7 +34,7 @@ CON
 
 OBJ
 
-    cfg : "core.con.boardcfg.flip"
+    cfg : "boardcfg.flip"
     ser : "com.serial.terminal.ansi"
     time: "time"
     disp: "display.led-seg.ht16k33"
