@@ -18,14 +18,14 @@ This is a P8X32A/Propeller driver object for the Holtek HT16K33 LED Matrix/Segme
 P1/SPIN1:
 * spin-standard-library
 * P1/SPIN1: 1 extra core/cog for the PASM I2C engine
-* lib.gfx.bitmap.spin library (only required for matrix driver; provided by
+* graphics.common.spinh library (only required for matrix driver; provided by
 spin-standard-library)
 * terminal.common.spinh (required for both matrix and 14-seg drivers; provided by
 spin-standard-library)
 
 P2/SPIN2:
 * p2-spin-standard-library
-* lib.gfx.bitmap.spin2 library (only required for matrix driver; provided by
+* graphics.common.spin2h library (only required for matrix driver; provided by
 p2-spin-standard-library)
 * terminal.common.spin2h (required for both matrix and 14-seg drivers; provided by
 p2-spin-standard-library)
