@@ -5,6 +5,7 @@ This is a P8X32A/Propeller driver object for the Holtek HT16K33 LED Matrix/Segme
 
 **IMPORTANT**: This software is meant to be used with the [spin-standard-library](https://github.com/avsa242/spin-standard-library) (P8X32A) or [p2-spin-standard-library](https://github.com/avsa242/p2-spin-standard-library) (P2X8C4M64P). Please install the applicable library first before attempting to use this code, otherwise you will be missing several files required to build the project.
 
+
 ## Salient Features
 
 * I2C connection at up to 400kHz
@@ -12,6 +13,7 @@ This is a P8X32A/Propeller driver object for the Holtek HT16K33 LED Matrix/Segme
 * Multiple address support
 * Supports Adafruit variant of the 8x8 matrix
 * Supports Adafruit 14-segment backpack 14-segment displays
+
 
 ## Requirements
 
@@ -30,21 +32,24 @@ p2-spin-standard-library)
 * terminal.common.spin2h (required for both matrix and 14-seg drivers; provided by
 p2-spin-standard-library)
 
+
 ## Compiler Compatibility
 
 | Processor | Language | Compiler               | Backend      | Status                |
 |-----------|----------|------------------------|--------------|-----------------------|
-| P1        | SPIN1    | FlexSpin (6.5.0)       | Bytecode     | OK                    |
-| P1        | SPIN1    | FlexSpin (6.5.0)       | Native/PASM  | OK                    |
-| P2        | SPIN2    | FlexSpin (6.5.0)       | NuCode       | FTBFS                 |
-| P2        | SPIN2    | FlexSpin (6.5.0)       | Native/PASM2 | OK                    |
+| P1        | SPIN1    | FlexSpin (6.8.0)       | Bytecode     | OK                    |
+| P1        | SPIN1    | FlexSpin (6.8.0)       | Native/PASM  | OK                    |
+| P2        | SPIN2    | FlexSpin (6.8.0)       | NuCode       | OK                    |
+| P2        | SPIN2    | FlexSpin (6.8.0)       | Native/PASM2 | OK                    |
 
 (other versions or toolchains not listed are __not supported__, and _may or may not_ work)
+
 
 ## Hardware compatibility
 
 * Tested using Adafruit 8x8 LED matrix
 * Tested using Adafruit 14-segment LED
+
 
 ## Limitations
 
