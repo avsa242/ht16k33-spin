@@ -1,12 +1,12 @@
 {
----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
     Filename:       HT16K33-14SegDemo.spin2
     Description:    Demo of the HT16K33 14-segment driver
     Author:         Jesse Burt
     Started:        Jun 22, 2021
     Updated:        Jan 22, 2024
     Copyright (c) 2024 - See end of file for terms of use.
----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
 }
 
 CON
@@ -18,12 +18,13 @@ CON
 OBJ
 
     cfg:    "boardcfg.p2eval"
-    ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
     fs:     "string.float"
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
     disp:   "display.led-seg.ht16k33" | SCL=28, SDA=29, I2C_FREQ=400_000, I2C_ADDR=%000, ...
                                         WIDTH=4, HEIGHT=1
     ' WIDTH, HEIGHT: number of digits/characters width and height the display has
     ' The demo is written to work best with a 4x1 display
+
 
 PUB main() | i, b
 
@@ -90,6 +91,7 @@ PUB main() | i, b
         b := ser.getchar()
         disp.putchar(b)
 
+
 PRI demo_msg(ptr_str)
 ' Clear the display, show a message, wait 2 seconds, then clear again
     disp.clear()
@@ -97,17 +99,21 @@ PRI demo_msg(ptr_str)
     waitms(2_000)
     disp.clear
 
+
 PUB setup()
 
     ser.start()
+
     ser.clear()
     ser.strln(@"Serial terminal started")
+
     if ( disp.start() )
         ser.strln(@"HT16K33 driver started")
         disp.defaults()
     else
         ser.str(@"HT16K33 driver failed to start - halting")
         repeat
+
 
 DAT
 {

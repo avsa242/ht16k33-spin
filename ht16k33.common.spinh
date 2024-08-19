@@ -1,19 +1,18 @@
 {
-    --------------------------------------------
-    Filename: ht16k33.common.spinh
-    Description: Low-level code common to HT16K33-based LED displays
-    Author: Jesse Burt
-    Copyright (c) 2023
-    Created: Sep 3, 2022
-    Updated: Jul 16, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+---------------------------------------------------------------------------------------------------
+    Filename:       ht16k33.common.spinh
+    Description:    Low-level code common to HT16K33-based LED displays
+    Author:         Jesse Burt
+    Started:        Sep 3, 2022
+    Updated:        Aug 19, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+---------------------------------------------------------------------------------------------------
 }
 
 CON
 
-    SLAVE_WR    = core#SLAVE_ADDR
-    SLAVE_RD    = core#SLAVE_ADDR|1
+    SLAVE_WR    = core.SLAVE_ADDR
+    SLAVE_RD    = core.SLAVE_ADDR|1
 
     DEF_SCL     = 28
     DEF_SDA     = 29
@@ -24,51 +23,58 @@ CON
     OFF         = 0
     ON          = 1
 
+
 VAR
 
     byte _dispsetup
     byte _addr_bits
 
+
 OBJ
 
-    i2c     : "com.i2c"                         ' I2C engine
-    core    : "core.con.ht16k33"                ' HW-specific constants
-    time    : "time"
+    i2c:    "com.i2c"                           ' I2C engine
+    core:   "core.con.ht16k33"                  ' HW-specific constants
+    time:   "time"
 
-PUB null{}
+
+PUB null()
 ' This is not a top-level object
 
-PUB stop{}
+
+PUB stop()
 ' Stop the driver
     visibility(FALSE)
     osc_ena(FALSE)
     time.msleep(100)
-    i2c.deinit{}
+    i2c.deinit()
 
-PUB defaults{}
+
+PUB defaults()
 ' Factory default settings
     osc_ena(TRUE)
     brightness(15)
     visibility(TRUE)
 
+
 PUB blink_rate(rate)
 ' Set blink rate of display, in Hz
-'   Valid values: 0_5 (0.5), 1, 2
-'   Any other value disables blinking
+'   Valid values: 0 (disable blinking), 0_5 (0.5), 1, 2
+'   Any other value is ignored
     case rate
         0:
             rate := 0
         0_5:
-            rate := %11 << core#BLINK
+            rate := %11 << core.BLINK
         1:
-            rate := %10 << core#BLINK
+            rate := %10 << core.BLINK
         2:
-            rate := %01 << core#BLINK
+            rate := %01 << core.BLINK
         other:
             return
 
-    _dispsetup := ((_dispsetup & core#BLINK_MASK) | rate)
-    writereg(core#DISPSETUP, _dispsetup)
+    _dispsetup := ((_dispsetup & core.BLINK_MASK) | rate)
+    writereg(core.DISPSETUP, _dispsetup)
+
 
 PUB brightness(level)
 ' Set display brightness
@@ -76,24 +82,24 @@ PUB brightness(level)
 '   Any other value is ignored
     case level
         0..15:
+            writereg(core.BRIGHTNESS, level)
         other:
             return
-    writereg(core#BRIGHTNESS, level)
+
 
 PUB visibility(state)
 ' Enable display visibility
 '   Valid values: TRUE/ON (-1 or 1), FALSE/OFF (0)
 '   Any other value is ignored
-'   NOTE: This doesn't affect display RAM contents;
-'       only whether it's currently displayed or not
+'   NOTE: This doesn't affect display RAM contents; only whether it's currently displayed or not
     case ||(state)
         OFF, ON:
             state := ||(state)
+            _dispsetup := ((_dispsetup & core.ONOFF_MASK) | state)
+            writereg(core.DISPSETUP, _dispsetup)
         other:
             return
 
-    _dispsetup := ((_dispsetup & core#ONOFF_MASK) | state)
-    writereg(core#DISPSETUP, _dispsetup)
 
 PUB osc_ena(state)
 ' Enable the oscillator
@@ -101,37 +107,39 @@ PUB osc_ena(state)
 '   Any other value is ignored
     case ||(state)
         0, 1: state := ||(state)
+            writereg(core.OSCILLATOR, state)
         other:
             return
-    writereg(core#OSCILLATOR, state)
+
 
 PRI writereg(reg_nr, ptr_buff) | cmd_pkt[2], i
 ' Write reg_nr to device from ptr_buff
     cmd_pkt.byte[0] := SLAVE_WR | _addr_bits
 
     case reg_nr
-        core#DISP_RAM:
+        core.DISP_RAM:
             { Display RAM }
-            cmd_pkt.byte[1] := core#DISP_RAM
-            i2c.start{}
+            cmd_pkt.byte[1] := core.DISP_RAM
+            i2c.start()
             i2c.wrblock_lsbf(@cmd_pkt, 2)
             repeat i from 0 to 7
                 i2c.write((byte[ptr_buff][i]) & $FF)
                 i2c.write($00)
-            i2c.stop{}
+            i2c.stop()
 
-        core#OSCILLATOR, core#DISPSETUP, core#ROWINT, core#BRIGHTNESS:
+        core.OSCILLATOR, core.DISPSETUP, core.ROWINT, core.BRIGHTNESS:
             { Control registers }
             cmd_pkt.byte[1] := reg_nr | ptr_buff
-            i2c.start{}
+            i2c.start()
             i2c.wrblock_lsbf(@cmd_pkt, 2)
-            i2c.stop{}
+            i2c.stop()
         other:
             return
 
+
 DAT
 {
-Copyright 2023 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

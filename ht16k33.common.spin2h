@@ -1,13 +1,12 @@
 {
-    --------------------------------------------
-    Filename: ht16k33.common.spin2h
-    Description: Low-level code common to HT16K33-based LED displays (P2 version)
-    Author: Jesse Burt
-    Copyright (c) 2023
-    Created: Sep 3, 2022
-    Updated: Jul 16, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+---------------------------------------------------------------------------------------------------
+    Filename:       ht16k33.common.spin2h
+    Description:    Low-level code common to HT16K33-based LED displays
+    Author:         Jesse Burt
+    Started:        Sep 3, 2022
+    Updated:        Aug 19, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+---------------------------------------------------------------------------------------------------
 }
 
 CON
@@ -24,18 +23,22 @@ CON
     OFF         = 0
     ON          = 1
 
+
 VAR
 
     byte _dispsetup
     byte _addr_bits
 
+
 OBJ
 
-    i2c     : "com.i2c"                         ' I2C engine
-    core    : "core.con.ht16k33"                ' HW-specific constants
+    i2c:    "com.i2c"                           ' I2C engine
+    core:   "core.con.ht16k33"                  ' HW-specific constants
+
 
 PUB null()
 ' This is not a top-level object
+
 
 PUB stop()
 ' Stop the driver
@@ -44,16 +47,18 @@ PUB stop()
     waitms(100)
     i2c.deinit()
 
+
 PUB defaults()
 ' Factory default settings
     osc_ena(TRUE)
     brightness(15)
     visibility(TRUE)
 
+
 PUB blink_rate(rate)
 ' Set blink rate of display, in Hz
-'   Valid values: 0_5 (0.5), 1, 2
-'   Any other value disables blinking
+'   Valid values: 0 (disable blinking), 0_5 (0.5), 1, 2
+'   Any other value is ignored
     case rate
         0:
             rate := 0
@@ -69,30 +74,31 @@ PUB blink_rate(rate)
     _dispsetup := ((_dispsetup & core.BLINK_MASK) | rate)
     writereg(core.DISPSETUP, _dispsetup)
 
+
 PUB brightness(level)
 ' Set display brightness
 '   Valid values: 0..15
 '   Any other value is ignored
     case level
         0..15:
+            writereg(core.BRIGHTNESS, level)
         other:
             return
-    writereg(core.BRIGHTNESS, level)
+
 
 PUB visibility(state)
 ' Enable display visibility
 '   Valid values: TRUE/ON (-1 or 1), FALSE/OFF (0)
 '   Any other value is ignored
-'   NOTE: This doesn't affect display RAM contents;
-'       only whether it's currently displayed or not
+'   NOTE: This doesn't affect display RAM contents; only whether it's currently displayed or not
     case abs(state)
         OFF, ON:
             state := abs(state)
+            _dispsetup := ((_dispsetup & core.ONOFF_MASK) | state)
+            writereg(core.DISPSETUP, _dispsetup)
         other:
             return
 
-    _dispsetup := ((_dispsetup & core.ONOFF_MASK) | state)
-    writereg(core.DISPSETUP, _dispsetup)
 
 PUB osc_ena(state)
 ' Enable the oscillator
@@ -100,9 +106,10 @@ PUB osc_ena(state)
 '   Any other value is ignored
     case abs(state)
         0, 1: state := abs(state)
+            writereg(core.OSCILLATOR, state)
         other:
             return
-    writereg(core.OSCILLATOR, state)
+
 
 PRI writereg(reg_nr, ptr_buff) | cmd_pkt[2], i
 ' Write reg_nr to device from ptr_buff
@@ -128,9 +135,10 @@ PRI writereg(reg_nr, ptr_buff) | cmd_pkt[2], i
         other:
             return
 
+
 DAT
 {
-Copyright 2023 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

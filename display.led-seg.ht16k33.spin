@@ -1,14 +1,14 @@
 {
-    --------------------------------------------
-    Filename: display.led-seg.ht16k33.spin
-    Description: Driver for HT16K33-based displays (segment type)
-    Author: Jesse Burt
-    Copyright (c) 2023
-    Created: Jun 22, 2021
-    Updated: Jul 16, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+---------------------------------------------------------------------------------------------------
+    Filename:       display.led-seg.ht16k33.spin
+    Description:    Driver for HT16K33-based LED displays (segment type)
+    Author:         Jesse Burt
+    Started:        Jun 22, 2021
+    Updated:        Aug 19, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+---------------------------------------------------------------------------------------------------
 }
+
 #include "ht16k33.common.spinh"
 #include "terminal.common.spinh"
 
@@ -16,13 +16,14 @@ CON
 
     { these can be overridden in the parent object }
     { default I/O settings; these can be overridden in the parent object }
-    SCL     = DEF_SCL
-    SDA     = DEF_SDA
-    I2C_FREQ= DEF_HZ
-    I2C_ADDR= DEF_ADDR
+    SCL     = 28
+    SDA     = 29
+    I2C_FREQ= 100_000
+    I2C_ADDR= 0
 
     WIDTH   = 2
     HEIGHT  = 1
+
 
 VAR
 
@@ -30,30 +31,32 @@ VAR
     word _disp_buff[7]                           ' 112 bits/segments
     byte _lastchar
 
-PUB start{}: status
+
+PUB start(): status
 ' Start using default I/O settings
     return startx(SCL, SDA, I2C_FREQ, I2C_ADDR, WIDTH, HEIGHT)
+
 
 PUB startx(SCL_PIN, SDA_PIN, I2C_HZ, ADDR_BITS, DISP_W, DISP_H): status
 ' SCL_PIN, SDA_PIN, I2C_HZ: I2C bus I/O pins and speed
 ' ADDR_BITS: specify LSBs of slave address (%000..%111)
 ' DISP_W, DISP_H: dimensions of display, in digits/characters
-    if ( lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31) )
-        if ( lookdown(ADDR_BITS: %000..%111) )
-            if ( status := i2c.init(SCL_PIN, SDA_PIN, I2C_HZ) )
-                time.usleep(core#T_POR)         ' wait for device startup
-                _addr_bits := ADDR_BITS << 1
-                _disp_width := DISP_W
-                _disp_height := DISP_H
-                _disp_xmax := WIDTH-1
-                _disp_ymax := HEIGHT-1
-                if ( i2c.present(SLAVE_WR | _addr_bits) ) ' test device presence
-                    clear{}
-                    return
+    if ( lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31) and lookdown(ADDR_BITS: %000..%111) )
+        if ( status := i2c.init(SCL_PIN, SDA_PIN, I2C_HZ) )
+            time.usleep(core.T_POR)         ' wait for device startup
+            _addr_bits := ADDR_BITS << 1
+            _disp_width := DISP_W
+            _disp_height := DISP_H
+            _disp_xmax := WIDTH-1
+            _disp_ymax := HEIGHT-1
+            if ( i2c.present(SLAVE_WR | _addr_bits) ) ' test device presence
+                clear()
+                return
     ' if this point is reached, something above failed
     ' Double check I/O pin assignments, connections, power
     ' Lastly - make sure you have at least one free core/cog
     return FALSE
+
 
 PUB char = putchar
 PUB putchar(c) | cmd_pkt, i
@@ -61,115 +64,126 @@ PUB putchar(c) | cmd_pkt, i
 '   NOTE: Interprets control characters
     case c
         BS, DEL:                                ' backspace/delete
-            prev_digit{}                        ' move back to previous digit
+            prev_digit()                        ' move back to previous digit
             update_buff(" ")                    '   and display a SPACE over it
         LF:
-            move_down{}
+            move_down()
         FF:                                     ' clear/form feed
-            clear{}
+            clear()
         CR:
             pos_x(0) 
         " ".."-", "/".."~":                     ' printable characters
             _lastchar := c
             update_buff(c)
-            next_digit{}
+            next_digit()
         ".":                                    ' period/decimal point
             if (lookdown(_lastchar: "0".."9"))  ' if previous char was a num,
                 _lastchar := "."                '   draw the decimal point in
-                prev_digit{}                    '   the same digit as the num
+                prev_digit()                    '   the same digit as the num
                 update_buff(c)
-                next_digit{}
+                next_digit()
             else
                 _lastchar := "."
                 update_buff(c)
-                next_digit{}
+                next_digit()
         other:
             return
 
     cmd_pkt.byte[0] := SLAVE_WR | _addr_bits
-    cmd_pkt.byte[1] := core#DISP_RAM
-    i2c.start{}
+    cmd_pkt.byte[1] := core.DISP_RAM
+    i2c.start()
     i2c.wrblock_lsbf(@cmd_pkt, 2)
     repeat i from 0 to 7
         i2c.wrword_lsbf(_disp_buff[i])
-    i2c.stop{}
+    i2c.stop()
 
-PUB clear{}
+
+PUB clear()
 ' Clear display
     repeat 7
-        char(" ")
+        putchar(" ")
     pos_xy(0, 0)
 
-PUB move_down{}
+
+PUB move_down()
 ' Move cursor down one row
 '   NOTE: Wraps around to the first row
     _row++
-    if (_row > _disp_ymax)
+    if ( _row > _disp_ymax )
         _row := 0
 
-PUB move_left{}
+
+PUB move_left()
 ' Move cursor left one column
 '   NOTE: Wraps around to the last column
     _col--
-    if (_col < 0)
+    if ( _col < 0 )
         _col := _disp_xmax
 
-PUB move_right{}
+
+PUB move_right()
 ' Move cursor right one column
 '   NOTE: Wraps around to the first column
     _col++
-    if (_col > _disp_xmax)
+    if ( _col > _disp_xmax )
         _col := 0
 
-PUB move_up{}
+
+PUB move_up()
 ' Move cursor up one row
 '   NOTE: Wraps around to the last row
     _row--
-    if (_row < 0)
+    if ( _row < 0 )
         _row := _disp_ymax
+
 
 PUB position = pos_xy
 PUB pos_xy(x, y)
 ' Set cursor position
-    if ((x => 0) and (x =< _disp_xmax) and (y => 0) and (y =< _disp_ymax))
+    if ( (x => 0) and (x =< _disp_xmax) and (y => 0) and (y =< _disp_ymax) )
         _col := x
         _row := y
+
 
 PUB positionx = pos_x
 PUB pos_x(x)
 ' Set cursor X position
-    if ((x => 0) and (x =< _disp_xmax))
+    if ( (x => 0) and (x =< _disp_xmax) )
         _col := x
+
 
 PUB positiony = pos_y
 PUB pos_y(y)
 ' Set cursor Y position
-    if ((y => 0) and (y =< _disp_ymax))
+    if ( (y => 0) and (y =< _disp_ymax) )
         _row := y
 
-PRI next_digit{}
+
+PRI next_digit()
 ' Advance to next display digit
 '   NOTE:
 '       * Wraps around to the first column
 '       * Wraps around to first row
     _col++
-    if (_col > _disp_xmax)
+    if ( _col > _disp_xmax )
         _col := 0
-        move_down{}
+        move_down()
 
-PRI prev_digit{}
+
+PRI prev_digit()
 ' Move back to previous display digit
 '   NOTE:
 '       * Wraps around to the last column
 '       * Wraps around to last row
     _col--
-    if (_col < 0)
+    if ( _col < 0 )
         _col := _disp_xmax
-        move_up{}
+        move_up()
+
 
 PRI update_buff(c)
 ' Update display buffer with character 'c'
-    if (c == ".")
+    if ( c == "." )
         ' if drawing a period/decimal point, OR it in with the current digit's
         '   data, so it doesn't clear the digit and just draw the period
         _disp_buff[(_row * _disp_width) + _col] |= _fnt_tbl[c-32]
@@ -285,7 +299,7 @@ _fnt_tbl    word    %0000_0000_0000_0000    ' (SP) - 32/$20
 
 DAT
 {
-Copyright 2023 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

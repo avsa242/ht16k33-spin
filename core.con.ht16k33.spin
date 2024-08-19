@@ -1,13 +1,12 @@
 {
-    --------------------------------------------
-    Filename: core.con.ht16k33.spin
-    Description: HT16K33-specific constants
-    Author: Jesse Burt
-    Created Oct 9, 2018
-    Updated Nov 22, 2020
-    Copyright (c) 2020
-    See end of file for terms of use.
-    --------------------------------------------
+---------------------------------------------------------------------------------------------------
+    Filename:       core.con.ht16k33.spin
+    Description:    HT16K33-specific constants
+    Author:         Jesse Burt
+    Started:        Oct 9, 2018
+    Updated:        Jan 28, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+---------------------------------------------------------------------------------------------------
 }
 
 CON
@@ -36,12 +35,14 @@ CON
     BRIGHTNESS      = $E0
     TESTMODE        = $D9
 
-PUB null{}
+
+PUB null()
 ' This is not a top-level object
+
 
 DAT
 {
-Copyright 2022 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
