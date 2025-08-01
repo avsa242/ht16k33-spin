@@ -1,0 +1,113 @@
+{
+----------------------------------------------------------------------------------------------------
+    Filename:       HT16K33-7SegDemo.spin
+    Description:    Demo of the HT16K33 segment driver
+        * 7-segment
+    Author:         Jesse Burt
+    Started:        Jul 25, 2025
+    Updated:        Aug 1, 2025
+    Copyright (c) 2025 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
+}
+
+CON
+
+    _clkmode    = xtal1+pll16x
+    _xinfreq    = 5_000_000
+
+
+OBJ
+
+    ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
+    disp:   "display.led-seg.ht16k33" | SCL=28, SDA=29, I2C_FREQ=2_000_000, I2C_ADDR=%000, ...
+                                        WIDTH=4, HEIGHT=1
+    font:   "font.seg.adafruit-7seg"
+    str:    "string"
+    time:   "time"
+
+    ' WIDTH, HEIGHT: number of digits/characters width and height the display has
+    ' The demo is written to work best with a 4x1 display
+
+
+PUB main() | i, t
+
+    setup()
+
+    repeat
+        disp.clear()
+        t := cnt
+        repeat
+            disp.pos_xy(0,0)
+            disp.str(@"12:34")
+            disp.show()
+            time.msleep(500)
+            disp.str(@"1234")
+            disp.show()
+            time.msleep(500)
+            if ( abs(cnt-t) > (clkfreq*5) )
+                quit
+
+        repeat
+            repeat i from 0 to 9999
+                disp.clear()
+                disp.pos_xy(0, 0)
+                disp.printf(@"%4d", i)
+                disp.show()
+            quit
+
+        time.msleep(1000)
+
+        disp.clear()
+        disp.str(@"3.141")
+        disp.show()
+        time.msleep(1000)
+        disp.clear()
+        disp.str(@"31.41")
+        disp.show()
+        disp.clear()
+        time.msleep(1000)
+        disp.str(@"314.1")
+        disp.show()
+        time.msleep(1000)
+        disp.clear()
+        disp.str(@"3141.")
+        disp.show()
+        time.msleep(1000)
+
+PUB setup()
+
+    ser.start()
+    time.msleep(30)
+    ser.clear()
+    ser.strln(@"Serial terminal started")
+
+    if ( disp.start() )
+        ser.strln(@"HT16K33 driver started")
+        disp.defaults()
+    else
+        ser.str(@"HT16K33 driver failed to start - halting")
+        repeat
+
+    disp.set_font( font.setup() )
+
+
+DAT
+{
+Copyright 2025 Jesse Burt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}
+
