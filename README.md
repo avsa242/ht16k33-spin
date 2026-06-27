@@ -11,8 +11,11 @@ This is a P8X32A/Propeller driver object for the Holtek HT16K33 LED Matrix/Segme
 * I2C connection at up to 400kHz
 * Set display brightness, blinking
 * Multiple address support
-* Supports Adafruit variant of the 8x8 matrix
-* Supports Adafruit 14-segment backpack 14-segment displays
+* Display variant support:
+    * dot-matrix
+    * 7-segment
+    * 14-segment
+* Horizontal scrolling (right to left)
 
 
 ## Requirements
@@ -33,10 +36,10 @@ P2/SPIN2:
 
 | Processor | Language | Compiler               | Backend      | Status                |
 |-----------|----------|------------------------|--------------|-----------------------|
-| P1        | SPIN1    | FlexSpin (6.9.4)       | Bytecode     | OK                    |
-| P1        | SPIN1    | FlexSpin (6.9.4)       | Native/PASM  | OK                    |
-| P2        | SPIN2    | FlexSpin (6.9.4)       | NuCode       | OK                    |
-| P2        | SPIN2    | FlexSpin (6.9.4)       | Native/PASM2 | OK                    |
+| P1        | SPIN1    | FlexSpin (7.6.11)      | Bytecode     | OK                    |
+| P1        | SPIN1    | FlexSpin (7.6.11)      | Native/PASM  | OK                    |
+| P2        | SPIN2    | FlexSpin (7.6.11)      | NuCode       | OK                    |
+| P2        | SPIN2    | FlexSpin (7.6.11)      | Native/PASM2 | OK                    |
 
 (other versions or toolchains not listed are __not supported__, and _may or may not_ work)
 
@@ -44,13 +47,14 @@ P2/SPIN2:
 ## Hardware compatibility
 
 * Tested using Adafruit 8x8 LED matrix
+* Tested using Adafruit 7-segment LED
 * Tested using Adafruit 14-segment LED
 
 
 ## Limitations
 
-* Very early in development - may malfunction or outright fail to build
 * Matrix driver written using Adafruit 8x8 backpack for development - pixel layout may differ from other brands or models
-* 14-seg driver written using Adafruit 14-seg backpack for development - segment layout may differ from other brands or models
-* Doesn't support 16 pixel-wide displays (planned)
+* led-seg driver written using Adafruit 7 and 14-seg backpack for development - segment layout may differ from other brands or models
+* Doesn't yet support 16 pixel-wide dot-matrix displays
+* Doesn't yet support multiple displays simultaneously
 

@@ -1,35 +1,36 @@
 {
 ----------------------------------------------------------------------------------------------------
     Filename:       HT16K33-7SegDemo.spin
-    Description:    Demo of the HT16K33 segment driver
-        * 7-segment
+    Description:    Demo of the HT16K33 driver
+        * 7-segment displays
     Author:         Jesse Burt
     Started:        Jul 25, 2025
-    Updated:        Aug 1, 2025
-    Copyright (c) 2025 - See end of file for terms of use.
+    Updated:        Jun 27, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
-CON
+con
 
     _clkmode    = xtal1+pll16x
     _xinfreq    = 5_000_000
 
 
-OBJ
+obj
 
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
-    disp:   "display.led-seg.ht16k33" | SCL=28, SDA=29, I2C_FREQ=2_000_000, I2C_ADDR=%000, ...
-                                        WIDTH=4, HEIGHT=1
+    disp:   "display.led-seg.ht16k33" | SCL=28, SDA=29, I2C_FREQ=400_000, I2C_ADDR=%000, ...
+                                        WIDTH=5, HEIGHT=1
     font:   "font.seg.adafruit-7seg"
     str:    "string"
     time:   "time"
 
     ' WIDTH, HEIGHT: number of digits/characters width and height the display has
     ' The demo is written to work best with a 4x1 display
+    ' If your display has a dedicated colon (:), add one to the WIDTH
+    '   (e.g., for a 4x1 digit display with a colon in the middle, set WIDTH=5 instead of 4)
 
-
-PUB main() | i, t
+pub main() | i, t
 
     setup()
 
@@ -74,7 +75,7 @@ PUB main() | i, t
         disp.show()
         time.msleep(1000)
 
-PUB setup()
+pub setup()
 
     ser.start()
     time.msleep(30)
@@ -91,9 +92,9 @@ PUB setup()
     disp.set_font( font.setup() )
 
 
-DAT
+dat
 {
-Copyright 2025 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
